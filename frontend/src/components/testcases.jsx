@@ -6,6 +6,7 @@ const TestCase = () => {
   const { problemId } = useParams();
   const [testCases, setTestCases] = useState([]);
   const [formData, setFormData] = useState({ input: '', output: '' });
+  const [selectedTestCases, setSelectedTestCases] = useState([]);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -50,6 +51,16 @@ const TestCase = () => {
       console.error(error);
       setMessage('An error occurred. Please try again.');
     }
+  };
+
+  const toggleTestCaseSelection = (id) => {
+    setSelectedTestCases(prevState => {
+      if (prevState.includes(id)) {
+        return prevState.filter(tcId => tcId !== id);
+      } else {
+        return [...prevState, id];
+      }
+    });
   };
 
   return (
@@ -97,8 +108,7 @@ const TestCase = () => {
         <ul>
           {testCases.map((testCase) => (
             <li key={testCase._id} className="bg-white p-4 mb-2 rounded shadow-md flex justify-between items-center">
-             
-             <div>
+              <div>
                 <p><strong>Input:</strong> {testCase.input}</p>
                 <p><strong>Output:</strong> {testCase.output}</p>
               </div>
@@ -109,6 +119,11 @@ const TestCase = () => {
                 >
                   Delete
                 </button>
+                <input
+                  type="checkbox"
+                  checked={selectedTestCases.includes(testCase._id)}
+                  onChange={() => toggleTestCaseSelection(testCase._id)}
+                />
               </div>
             </li>
           ))}

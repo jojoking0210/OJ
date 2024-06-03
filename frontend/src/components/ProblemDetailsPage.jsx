@@ -1,4 +1,3 @@
-// src/components/ProblemDetailsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -42,6 +41,14 @@ const ProblemDetailsPage = () => {
     setCode(e.target.value);
   };
 
+  const handleRun = () => {
+    // Add logic to run the code
+  };
+
+  const handleSubmit = () => {
+    // Add logic to submit the code
+  };
+
   if (loading) {
     return <p>Loading...</p>;
   }
@@ -51,7 +58,7 @@ const ProblemDetailsPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex relative">
       <div className="w-1/2 p-4">
         {problem ? (
           <>
@@ -78,6 +85,10 @@ const ProblemDetailsPage = () => {
           className="w-full h-full border rounded p-2"
           placeholder="Write your code here"
         />
+        <div className="absolute bottom-4 right-4">
+          <button onClick={handleRun} className="bg-blue-500 text-white px-4 py-2 rounded mr-4">Run</button>
+          <button onClick={handleSubmit} className="bg-green-500 text-white px-4 py-2 rounded">Submit</button>
+        </div>
       </div>
     </div>
   );

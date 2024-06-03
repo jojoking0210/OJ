@@ -182,11 +182,13 @@ app.post('/problems/:id/testcases', async (req, res) => {
         if (!problem) {
             return res.status(404).send('Problem not found');
         }
-        problem.testCases.push(req.body);
+        const { input, output } = req.body;
+        problem.testCases.push({ input, output });
         await problem.save();
         res.status(201).send(problem.testCases);
-    } catch (err) {
-        res.status(400).send(err.message);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
     }
 });
 
@@ -197,18 +199,23 @@ app.delete('/problems/:id/testcases/:testCaseId', async (req, res) => {
       if (!problem) {
         return res.status(404).send('Problem not found');
       }
-      const testCase = problem.testCases.id(req.params.testCaseId);
+      
+      const testCase = problem.testCases.find(tc => tc._id.toString() === req.params.testCaseId);
       if (!testCase) {
         return res.status(404).send('Test case not found');
       }
-      testCase.remove();
+      
+      // Remove the test case from the problem's testCases array
+      problem.testCases.pull(testCase);
+      
       await problem.save();
       res.status(204).send();
     } catch (err) {
-      res.status(500).send(err.message);
+      console.error(err);
+      res.status(500).send('Internal Server Error');
     }
   });
-  
+    
 
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
