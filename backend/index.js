@@ -12,37 +12,46 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5050;
 
+
+//middlewares
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+//Connects to the MongoDB database.
 DBConnection();
 
+//A simple route to check if the server is running.
 app.get("/", (req, res) => {
     res.send("Hello, world!");
 });
 
+/*
+Gets user data from the request body.
+Checks if all required data is provided.
+Checks if the user already exists.
+Hashes the password for security.
+Saves the new user in the database.
+Creates a token for the user.
+Sends back a success message and the user data (excluding the password).
+*/
 app.post("/register", async (req, res) => {
     try {
-        //get all the data from body
         const { firstname, lastname, email, password } = req.body;
 
-        // check that all the data should exists
-        if (!(firstname && lastname && email && password)) {
+        if (!(firstname, lastname, email, password)) {
             return res.status(400).send("Please enter all the information");
         }
 
-        // check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(200).send("User already exists!");
         }
 
-        // encrypt the password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // save the user in DB
         const user = await User.create({
             firstname,
             lastname,
@@ -50,37 +59,39 @@ app.post("/register", async (req, res) => {
             password: hashedPassword,
         });
 
-        // generate a token for user and send it
         const token = jwt.sign({ id: user._id, email }, process.env.SECRET_KEY, {
             expiresIn: "1d",
         });
         user.token = token;
         user.password = undefined;
-        res
-            .status(200)
-            .json({ message: "You have successfully registered!", user });
+        res.status(200).json({ message: "You have successfully registered!", user });
     } catch (error) {
         console.log(error);
+        res.status(500).send("Internal Server Error");
     }
 });
 
+/*
+Gets login data from the request body.
+Checks if all required data is provided.
+Finds the user in the database.
+Compares the provided password with the stored hashed password.
+If correct, generates a token for the user.
+Sends back a success message and sets a cookie with the token.
+*/
 app.post("/login", async (req, res) => {
     try {
-        //get all the user data
         const { email, password } = req.body;
 
-        // check that all the data should exists
-        if (!(email && password)) {
+        if (!(email, password)) {
             return res.status(400).send("Please enter all the information");
         }
 
-        //find the user in the database
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(401).send("User not found!");
         }
 
-        //match the password
         const enteredPassword = await bcrypt.compare(password, user.password);
         if (!enteredPassword) {
             return res.status(401).send("Password is incorrect");
@@ -92,13 +103,11 @@ app.post("/login", async (req, res) => {
         user.token = token;
         user.password = undefined;
 
-        //store cookies
         const options = {
             expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-            httpOnly: true, //only manipulate by server not by client/user
+            httpOnly: true,
         };
 
-        //send the token
         res.status(200).cookie("token", token, options).json({
             message: "You have successfully logged in!",
             success: true,
@@ -106,42 +115,100 @@ app.post("/login", async (req, res) => {
         });
     } catch (error) {
         console.log(error.message);
+        res.status(500).send("Internal Server Error");
     }
 });
 
-
 const Problem = require('./model/Problem');
 
-// Create a new problem
 app.post('/problems', async (req, res) => {
     const problem = new Problem(req.body);
     await problem.save();
     res.status(201).send(problem);
 });
 
-// Get all problems
 app.get('/problems', async (req, res) => {
     const problems = await Problem.find();
     res.send(problems);
 });
 
-// Get a specific problem
+// app.get('/problems/:id', async (req, res) => {
+//     const problem = await Problem.findById(req.params.id);
+//     res.send(problem);
+// });
 app.get('/problems/:id', async (req, res) => {
-    const problem = await Problem.findById(req.params.id);
-    res.send(problem);
-});
+    try {
+      const problem = await Problem.findById(req.params.id);
+      if (!problem) {
+        return res.status(404).json({ message: 'Problem not found' });
+      }
+      res.json(problem);
+    } catch (error) {
+      console.error('Error fetching problem:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
 
-// Update a problem
 app.put('/problems/:id', async (req, res) => {
     const problem = await Problem.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.send(problem);
 });
 
-// Delete a problem
 app.delete('/problems/:id', async (req, res) => {
     await Problem.findByIdAndDelete(req.params.id);
     res.status(204).send();
 });
+
+
+
+
+// Get all test cases for a problem
+app.get('/problems/:id/testcases', async (req, res) => {
+    try {
+        const problem = await Problem.findById(req.params.id);
+        if (!problem) {
+            return res.status(404).send('Problem not found');
+        }
+        res.json(problem.testCases);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// Add a test case to a problem
+app.post('/problems/:id/testcases', async (req, res) => {
+    try {
+        const problem = await Problem.findById(req.params.id);
+        if (!problem) {
+            return res.status(404).send('Problem not found');
+        }
+        problem.testCases.push(req.body);
+        await problem.save();
+        res.status(201).send(problem.testCases);
+    } catch (err) {
+        res.status(400).send(err.message);
+    }
+});
+
+// Delete a test case from a problem
+app.delete('/problems/:id/testcases/:testCaseId', async (req, res) => {
+    try {
+      const problem = await Problem.findById(req.params.id);
+      if (!problem) {
+        return res.status(404).send('Problem not found');
+      }
+      const testCase = problem.testCases.id(req.params.testCaseId);
+      if (!testCase) {
+        return res.status(404).send('Test case not found');
+      }
+      testCase.remove();
+      await problem.save();
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
+  });
+  
 
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);

@@ -13,6 +13,7 @@ const Home = () => {
             <Link to="/problems" className="hover:underline">Problems</Link>
             <Link to="/register" className="hover:underline">Register</Link>
             <Link to="/login" className="hover:underline">Login</Link>
+            <Link to="/ManageProblems" className="hover:underline">ManageProblems</Link>
           </nav>
         </div>
       </header>

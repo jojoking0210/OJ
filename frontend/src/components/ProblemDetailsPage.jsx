@@ -1,53 +1,83 @@
 // src/components/ProblemDetailsPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
 
-const ProblemDetailsPage = ({ problem }) => {
-  const [selectedLanguage, setSelectedLanguage] = useState('javascript');
+const ProblemDetailsPage = () => {
+  const { problemId } = useParams();
+  const [problem, setProblem] = useState(null);
+  const [testCases, setTestCases] = useState([]);
   const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleLanguageChange = (e) => {
-    setSelectedLanguage(e.target.value);
+  useEffect(() => {
+    fetchProblemDetails();
+    fetchTestCases();
+  }, [problemId]);
+
+  const fetchProblemDetails = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5050/problems/${problemId}`);
+      setProblem(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching problem details:", error);
+      setError("Error fetching problem details");
+      setLoading(false);
+    }
   };
 
-  const handleRun = () => {
-    // Implement code execution on sample test cases
-    console.log('Running code on sample test cases...');
+  const fetchTestCases = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5050/problems/${problemId}/testcases`);
+      setTestCases(response.data);
+    } catch (error) {
+      console.error("Error fetching test cases:", error);
+      setError("Error fetching test cases");
+    }
   };
 
-  const handleSubmit = () => {
-    // Implement code execution on all test cases and display verdict
-    console.log('Running code on all test cases and displaying verdict...');
+  const handleCodeChange = (e) => {
+    setCode(e.target.value);
   };
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>{error}</p>;
+  }
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-100 p-4">
-      <div className="container mx-auto">
-        <h2 className="text-2xl font-bold mt-8 mb-4">{problem.name}</h2>
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold">Description:</h3>
-          <div dangerouslySetInnerHTML={{ __html: problem.description }} />
-        </div>
-        <div className="flex items-center mb-4">
-          <h3 className="text-lg font-semibold mr-2">Select Language:</h3>
-          <select
-            value={selectedLanguage}
-            onChange={handleLanguageChange}
-            className="border p-2 rounded"
-          >
-            <option value="javascript">JavaScript</option>
-            {/* Add more language options here */}
-          </select>
-        </div>
+    <div className="min-h-screen flex">
+      <div className="w-1/2 p-4">
+        {problem ? (
+          <>
+            <h2 className="text-2xl font-bold mb-4">{problem.name}</h2>
+            <p className="mb-4">{problem.description}</p>
+            <h3 className="text-xl font-bold mb-2">Test Cases</h3>
+            <ul className="list-disc list-inside">
+              {testCases.map((testCase) => (
+                <li key={testCase._id} className="mb-2">
+                  <strong>Input:</strong> {testCase.input} | <strong>Output:</strong> {testCase.output}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p>No problem data available</p>
+        )}
+      </div>
+      <div className="w-1/2 p-4">
+        <h3 className="text-xl font-bold mb-2">Code Editor</h3>
         <textarea
           value={code}
-          onChange={(e) => setCode(e.target.value)}
-          className="w-full mb-4 h-48 border p-2 rounded"
-          style={{ resize: 'vertical' }}
+          onChange={handleCodeChange}
+          className="w-full h-full border rounded p-2"
+          placeholder="Write your code here"
         />
-        <div className="flex justify-center">
-          <button onClick={handleRun} className="bg-blue-500 text-white px-4 py-2 rounded mr-4">Run</button>
-          <button onClick={handleSubmit} className="bg-green-500 text-white px-4 py-2 rounded">Submit</button>
-        </div>
       </div>
     </div>
   );

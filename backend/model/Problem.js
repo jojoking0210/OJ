@@ -1,10 +1,18 @@
 const mongoose = require('mongoose');
 
-const ProblemSchema = new mongoose.Schema({
-    statement: String,
-    name: String,
-    code: String,
-    difficulty: String
+const testCaseSchema = new mongoose.Schema({
+  input: { type: String, required: true },
+  output: { type: String, required: true }
 });
 
-module.exports = mongoose.model('Problem', ProblemSchema);
+const problemSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String, required: true },
+  tag: { type: String, required: true },
+  difficulty: { type: String, required: true },
+  submissionPercentage: { type: Number },
+  solution: { type: String },
+  testCases: [testCaseSchema] // Reference the testCaseSchema
+});
+
+module.exports = mongoose.model('Problem', problemSchema);

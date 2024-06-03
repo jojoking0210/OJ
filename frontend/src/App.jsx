@@ -4,9 +4,11 @@ import './App.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Register from './components/Register';
-import Login from './components/login';
+import Login from './components/login'; // Ensure the file name matches the case
 import ProblemPage from './components/ProblemPage';
-import ProblemDetailsPage from './components/ProblemDetailsPage'; // Import ProblemDetailsPage
+import ProblemDetailsPage from './components/ProblemDetailsPage';
+import ManageProblems from './components/ManageProblems';
+import TestCase from './components/testcases'; // Ensure the file name matches the case
 
 function App() {
   return (
@@ -16,7 +18,9 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/problems" element={<ProblemPage />} />
-        <Route path="/problems/1" element={<ProblemDetailsPage />} /> {/* Add route for ProblemDetailsPage */}
+        <Route path="/ManageProblems" element={<ManageProblems />} />
+        <Route path="/testcases/:problemId" element={<TestCase />} />
+        <Route path="/problems/:problemId" element={<ProblemDetailsPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,19 +1,32 @@
 // src/components/ProblemPage.jsx
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // Import Link from React Router
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Link } from 'react-router-dom';
 
-const problems = [
-  { id: 1, name: 'Two Sum', tag: 'Array', difficulty: 'Easy', submissionPercentage: '45%', solution: 'Solution 1' },
-  { id: 2, name: 'Longest Substring Without Repeating Characters', tag: 'String', difficulty: 'Medium', submissionPercentage: '33%', solution: 'Solution 2' },
-  { id: 3, name: 'Median of Two Sorted Arrays', tag: 'Array', difficulty: 'Hard', submissionPercentage: '29%', solution: 'Solution 3' },
-  // Add more problems as needed
-];
+
+
 
 const ProblemPage = () => {
+  const [problems, setProblems] = useState([]);
   const [filterTag, setFilterTag] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
 
-  const filteredProblems = problems.filter(problem => {
+  useEffect(() => {
+    fetchProblems();
+  }, []);
+
+  //Fetching Problems from Backend: Instead of using hardcoded problems, the fetchProblems function fetches the problem data from the backend.
+
+  const fetchProblems = async () => {
+    try {
+      const response = await axios.get('http://localhost:5050/problems');
+      setProblems(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  //Rendering: The filteredProblems array is derived from the problems state and rendered in the table.
+ const filteredProblems = problems.filter(problem => {
     return (
       (filterTag ? problem.tag === filterTag : true) &&
       (filterDifficulty ? problem.difficulty === filterDifficulty : true)
@@ -71,21 +84,30 @@ const ProblemPage = () => {
               {filteredProblems.map((problem, index) => (
                 <tr key={index}>
                   <td className="py-2 px-4 border-b">
-                    <Link to={`/problems/${problem.id}`} className="text-blue-600 hover:underline">{problem.name}</Link> {
-/* Link to ProblemDetailsPage */} 
+                    <Link to={`/problems/${problem._id}`} className="text-blue-600 hover:underline">
+                      {problem.name}
+                    </Link>
                   </td>
                   <td className="py-2 px-4 border-b">{problem.tag}</td>
                   <td className="py-2 px-4 border-b">
-                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                      problem.difficulty === 'Easy' ? 'bg-green-200 text-green-800' :
-                      problem.difficulty === 'Medium' ? 'bg-yellow-200 text-yellow-800' :
-                      'bg-red-200 text-red-800'
-                    }`}>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                        problem.difficulty === 'Easy'
+                          ? 'bg-green-200 text-green-800'
+                          : problem.difficulty === 'Medium'
+                          ? 'bg-yellow-200 text-yellow-800'
+                          : 'bg-red-200 text-red-800'
+                      }`}
+                    >
                       {problem.difficulty}
                     </span>
                   </td>
                   <td className="py-2 px-4 border-b">{problem.submissionPercentage}</td>
-                  <td className="py-2 px-4 border-b"><a href="#" className="text-blue-600 hover:underline">{problem.solution}</a></td>
+                  <td className="py-2 px-4 border-b">
+                    <a href="#" className="text-blue-600 hover:underline">
+                      {problem.solution}
+                    </a>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -93,9 +115,7 @@ const ProblemPage = () => {
         </div>
       </div>
       <footer className="bg-blue-600 w-full py-4 text-white text-center mt-auto">
-        <div className="container mx-auto">
-          &copy; 2024 Online Judge. All rights reserved.
-        </div>
+        <div className="container mx-auto">&copy; 2024 Online Judge. All rights reserved.</div>
       </footer>
     </div>
   );
