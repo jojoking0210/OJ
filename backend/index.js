@@ -12,7 +12,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5050;
 
-
 //middlewares
 
 app.use(cors());
@@ -27,6 +26,61 @@ DBConnection();
 app.get("/", (req, res) => {
     res.send("Hello, world!");
 });
+
+//Post user
+app.post('/users', async (req, res) => {
+    try {
+      const { firstname, lastname, email, role, password } = req.body;
+  
+      // Log the request body to verify the role field
+      console.log('Request Body:', req.body);
+  
+      const newUser = new User({ firstname, lastname, email, role, password });
+      await newUser.save();
+      res.status(201).send(newUser);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send(error.message);
+    }
+  });
+
+  //updating user
+  app.put('/users/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { firstname, lastname, email, role, password } = req.body;
+  
+      // Log the request body to verify the role field
+      console.log('Request Body:', req.body);
+  
+      const updatedUser = await User.findByIdAndUpdate(id, { firstname, lastname, email, role, password }, { new: true });
+      res.status(200).send(updatedUser);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send(error.message);
+    }
+  });
+  
+  app.get('/users', async (req, res) => {
+    const users = await User.find();
+    res.send(users);
+});
+
+app.get('/users/:id', async (req, res) => {
+    try {
+      const users = await User.findById(req.params.id);
+      if (!users) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching problem:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+    
+
 
 /*
 Gets user data from the request body.
@@ -79,6 +133,8 @@ Compares the provided password with the stored hashed password.
 If correct, generates a token for the user.
 Sends back a success message and sets a cookie with the token.
 */
+
+
 app.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;

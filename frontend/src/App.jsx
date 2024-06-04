@@ -9,6 +9,7 @@ import ProblemPage from './components/ProblemPage';
 import ProblemDetailsPage from './components/ProblemDetailsPage';
 import ManageProblems from './components/ManageProblems';
 import TestCase from './components/testcases'; // Ensure the file name matches the case
+import HomeButton from './components/HomeButton';
 
 function App() {
   return (

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import HomeButton from './HomeButton';
 
 const Problems = () => {
   const [problems, setProblems] = useState([]);
+  const [filteredProblems, setFilteredProblems] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -12,10 +14,15 @@ const Problems = () => {
   });
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState('');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
 
   useEffect(() => {
     fetchProblems();
   }, []);
+
+  useEffect(() => {
+    filterProblems();
+  }, [problems, selectedDifficulty]);
 
   const fetchProblems = async () => {
     try {
@@ -74,8 +81,27 @@ const Problems = () => {
     }
   };
 
+  const handleDifficultyChange = (e) => {
+    setSelectedDifficulty(e.target.value);
+  };
+
+  const filterProblems = () => {
+    if (selectedDifficulty === 'all') {
+      setFilteredProblems(problems);
+    } else {
+      setFilteredProblems(problems.filter(problem => problem.difficulty === selectedDifficulty));
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+      <header className="bg-blue-500 w-full py-4 text-white text-center">
+        <div className="container mx-auto">
+          <div className="text-3xl font-bold">
+            <Link to="/">Online Judge</Link>
+          </div>
+        </div>
+      </header>
       <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center">Problems</h2>
         {message && <p className="mb-4 text-center text-green-600">{message}</p>}
@@ -145,43 +171,62 @@ const Problems = () => {
       </div>
 
       <div className="mt-8 w-full max-w-md">
-        <h3
-className="text-xl font-bold mb-4 text-center">Existing Problems</h3>
-<ul>
-  {problems.map((problem) => (
-    <li key={problem._id} className="bg-white p-4 mb-2 rounded shadow-md flex justify-between items-center">
-      <div>
-        <h4 className="text-lg font-bold">{problem.name}</h4>
-        <p>{problem.description}</p>
-        <p>{problem.tag}</p> {/* Display 'tag' attribute */}
-        <p>{problem.difficulty}</p>
+        <h3 className="text-xl font-bold mb-4 text-center">Existing Problems</h3>
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-2" htmlFor="difficulty-filter">
+            Filter by Difficulty
+          </label>
+          <select
+            id="difficulty-filter"
+            value={selectedDifficulty}
+            onChange={handleDifficultyChange}
+            className="w-full px-3 py-2 border rounded"
+          >
+            <option value="all">All</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <ul>
+          {filteredProblems.map((problem) => (
+            <li key={problem._id} className="bg-white p-4 mb-2 rounded shadow-md flex justify-between items-center">
+              <div>
+                <h4 className="text-lg font-bold">{problem.name}</h4>
+                <p>{problem.description}</p>
+                <p className={`inline-block px-2 py-1 rounded ${
+                  problem.difficulty === 'easy' ? 'bg-green-200' : 
+                  problem.difficulty === 'medium' ? 'bg-yellow-200' : 'bg-red-200'
+                }`}>
+                  {problem.difficulty}
+                </p>
+              </div>
+              <div>
+                <button
+                  onClick={() => handleEdit(problem)}
+                  className="bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(problem._id)}
+                  className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                >
+                  Delete
+                </button>
+                <Link
+                  to={`/testcases/${problem._id}`}
+                  className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                >
+                  Manage Test Cases
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
-      <div>
-        <button
-          onClick={() => handleEdit(problem)}
-          className="bg-yellow-500 text-white px-2 py-1 rounded mr-2 hover:bg-yellow-600"
-        >
-          Edit
-        </button>
-        <button
-          onClick={() => handleDelete(problem._id)}
-          className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-        >
-          Delete
-        </button>
-        <Link
-          to={`/testcases/${problem._id}`}
-          className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-        >
-          Manage Test Cases
-        </Link>
-      </div>
-    </li>
-  ))}
-</ul>
-</div>
-</div>
-);
+    </div>
+  );
 };
 
 export default Problems;

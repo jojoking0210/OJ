@@ -1,10 +1,6 @@
-// src/components/ProblemPage.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-
-
-
 
 const ProblemPage = () => {
   const [problems, setProblems] = useState([]);
@@ -15,8 +11,7 @@ const ProblemPage = () => {
     fetchProblems();
   }, []);
 
-  //Fetching Problems from Backend: Instead of using hardcoded problems, the fetchProblems function fetches the problem data from the backend.
-
+  // Fetching Problems from Backend
   const fetchProblems = async () => {
     try {
       const response = await axios.get('http://localhost:5050/problems');
@@ -25,8 +20,10 @@ const ProblemPage = () => {
       console.error(error);
     }
   };
-  //Rendering: The filteredProblems array is derived from the problems state and rendered in the table.
- const filteredProblems = problems.filter(problem => {
+
+  // Filter problems based on selected tag and difficulty
+  const filteredProblems = problems.filter(problem => {
+    console.log(`Filtering: Problem difficulty - ${problem.difficulty}, Filter difficulty - ${filterDifficulty}`);
     return (
       (filterTag ? problem.tag === filterTag : true) &&
       (filterDifficulty ? problem.difficulty === filterDifficulty : true)
@@ -42,6 +39,7 @@ const ProblemPage = () => {
       </header>
       <div className="container mx-auto">
         <div className="mb-4 flex justify-between">
+          {/* Filter by Tag */}
           <div>
             <label className="mr-2">Filter by Tag:</label>
             <select
@@ -52,9 +50,10 @@ const ProblemPage = () => {
               <option value="">All</option>
               <option value="Array">Array</option>
               <option value="String">String</option>
-              {/* Add more tags as needed */}
+              <option value="Basic">Basic</option>
             </select>
           </div>
+          {/* Filter by Difficulty */}
           <div>
             <label className="mr-2">Filter by Difficulty:</label>
             <select
@@ -63,9 +62,9 @@ const ProblemPage = () => {
               className="border p-2 rounded"
             >
               <option value="">All</option>
-              <option value="Easy">Easy</option>
-              <option value="Medium">Medium</option>
-              <option value="Hard">Hard</option>
+              <option value="easy">easy</option>
+              <option value="medium">medium</option>
+              <option value="hard">hard</option>
             </select>
           </div>
         </div>
@@ -92,9 +91,9 @@ const ProblemPage = () => {
                   <td className="py-2 px-4 border-b">
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                        problem.difficulty === 'Easy'
+                        problem.difficulty === 'easy'
                           ? 'bg-green-200 text-green-800'
-                          : problem.difficulty === 'Medium'
+                          : problem.difficulty === 'medium'
                           ? 'bg-yellow-200 text-yellow-800'
                           : 'bg-red-200 text-red-800'
                       }`}

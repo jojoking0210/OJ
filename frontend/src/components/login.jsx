@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import HomeButton from './HomeButton';
+
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -41,10 +43,13 @@ const Login = () => {
   };
 
   return (
+    
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
       <header className="bg-blue-600 w-full py-4 text-white text-center">
         <div className="container mx-auto">
-          <h1 className="text-3xl font-bold">Online Judge</h1>
+          <div className="text-3xl font-bold">
+            <Link to="/">Online Judge</Link>
+          </div>
         </div>
       </header>
       <main className="flex-grow flex flex-col items-center justify-center">
