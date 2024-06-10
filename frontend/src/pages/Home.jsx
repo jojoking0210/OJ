@@ -1,21 +1,23 @@
-import React from "react";
-import { Link } from "react-router-dom";
+// src/components/Home.jsx
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Home = () => {
+  const userId = '6654972540ff18bf4f09999a'; // Replace with the actual logged-in user ID
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-blue-600 text-white">
-        <div className="container mx-auto flex justify-between items-center p-4">
-          <div className="text-2xl font-bold">
-            <Link to="/">Online Judge</Link>
-          </div>
-          <nav className="space-x-4">
-            <Link to="/problems" className="hover:underline">Problems</Link>
-            <Link to="/register" className="hover:underline">Register</Link>
-            <Link to="/login" className="hover:underline">Login</Link>
-            <Link to="/ManageProblems" className="hover:underline">ManageProblems</Link>
-          </nav>
-        </div>
+    <div className="min-h-screen flex flex-col bg-gray-100">
+      <header className="bg-blue-600 w-full py-4 flex justify-between items-center px-4">
+        <h1 className="text-white text-3xl font-bold">
+          <Link to="/">Online Judge</Link>
+        </h1>
+        <nav className="space-x-4 flex items-center">
+          {/* <Link to="/problems" className="text-white hover:underline">Problems</Link>
+          <Link to="/register" className="text-white hover:underline">Register</Link>
+          <Link to="/login" className="text-white hover:underline">Login</Link> */}
+          <Link to="/ManageProblems" className="text-white hover:underline">Manage Problems</Link>
+          <Link to={`/users/${userId}/profile`} className="text-white hover:underline">Profile</Link>
+        </nav>
       </header>
       <main className="flex-grow container mx-auto p-4">
         <section className="text-center my-16">

@@ -8,7 +8,7 @@ const Register = () => {
     firstname: '',
     lastname: '',
     email: '',
-    role: 'user', // Default role set to 'user'
+    role: '', 
     password: '',
   });
 
@@ -102,17 +102,15 @@ const Register = () => {
             <label className="block text-gray-700 mb-2" htmlFor="role">
               Role
             </label>
-            <select
+            <input
+              type="text"
               id="role"
               name="role"
               value={formData.role}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded"
               required
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
+            />
           </div>
 
           <div className="mb-4">
