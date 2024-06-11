@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-// import AceEditor from 'react-ace';
-// import 'brace/mode/javascript';
-// import 'brace/theme/monokai';
+import AceEditor from 'react-ace';
+import 'brace/mode/javascript';
+import 'brace/theme/monokai';
+import 'ace-builds/src-noconflict/mode-javascript';
+import 'ace-builds/src-noconflict/theme-monokai';
 
 import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs/components/prism-core';
@@ -18,23 +20,24 @@ const ProblemDetailsPage = () => {
   const [testCases, setTestCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedTestCases, setSelectedTestCases] = useState([]);
   const [leftWidth, setLeftWidth] = useState(50); // Default width percentage for the left pane
   const [code, setCode] = useState(`
-  // Include the input/output stream library
-  #include <iostream> 
+  #include <bits/stdc++.h> 
+  using namespace std;
 
   // Define the main function
   int main() { 
-      // Output "Hello World!" to the console
-      std::cout << "Hello World!"; 
-      
-      // Return 0 to indicate successful execution
+
+     cout<<"Hello World!"<<endl;
+
       return 0; 
-  }`);
+  }
+  `);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
-
-  const handleSubmit = async () => {
+  const [problem_Id, setProblemId] = useState('');
+  const handleRun = async () => {
     const payload = {
       language: 'cpp',
       code,
@@ -44,11 +47,44 @@ const ProblemDetailsPage = () => {
     try {
       const { data } = await axios.post('http://localhost:5050/run', payload);
       console.log(data);
-      setOutput(data.output);
+      setOutput(data.output); 
     } catch (error) {
       console.log(error.response);
     }
   }
+
+  const [verdict, setVerdict] = useState('');
+  const handleSubmit = async () => {
+      const payload = {
+          problemId, // Assuming problemId is available in the component's state or props
+          language: 'cpp',
+          solution: code,
+          input // Ensure input is provided or handled correctly in your component
+      };
+  
+      try {
+        // Retrieve the token from local storage or a similar place
+        const token = localStorage.getItem('token');
+
+        const { data } = await axios.post('http://localhost:5050/submit', payload, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        console.log("Response Data:", data);
+
+        if (data && data.verdict) {
+            setVerdict(data.verdict);
+            setOutput(data.verdict); // Assuming setOutput is a state function to display the output
+        } else {
+            console.error("Invalid response data:", data);
+            setOutput("Error: Invalid response from server");
+        }
+    } catch (error) {
+        console.error("Error submitting code:", error);
+        setOutput("Error: Failed to submit code");
+    }
+  };
 
   useEffect(() => {
     fetchProblemDetails();
@@ -77,17 +113,16 @@ const ProblemDetailsPage = () => {
     }
   };
 
-  const handleCodeChange = (newCode) => {
-    setCode(newCode);
+  const toggleTestCaseSelection = (id) => {
+    setSelectedTestCases(prevState => {
+      if (prevState.includes(id)) {
+        return prevState.filter(tcId => tcId !== id);
+      } else {
+        return [...prevState, id];
+      }
+    });
   };
   
-  // const handleRun = () => {
-  //   // Add logic to run the code
-  // };
-
-  // const handleSubmit = () => {
-  //   // Add logic to submit the code
-  // };
 
   const handleMouseDown = (e) => {
     document.addEventListener('mousemove', handleMouseMove);
@@ -121,15 +156,17 @@ const ProblemDetailsPage = () => {
           {problem ? (
             <>
               <h2 className="text-2xl font-bold mb-4">{problem.name}</h2>
-              <p className="mb-4">{problem.description}</p>
+              <p className="text-base font-medium text-gray-700 mb-4" style={{ lineHeight: '1.5' }}>
+                {problem.description}
+              </p>
             
 
               <h3 className="text-xl font-bold mb-2">Test Cases</h3>
               <ul className="list-disc list-inside">
                 {testCases.map((testCase) => (
                   <li key={testCase._id} className="mb-2">
-                    <strong>Input:</strong> <pre className="bg-gray-100 p-2 rounded">{testCase.input}</pre>
-                    <strong>Output:</strong> <pre className="bg-gray-100 p-2 rounded">{testCase.output}</pre>
+                      <strong>Input:</strong> <pre className="bg-gray-100 p-2 rounded">{testCase.input}</pre>
+                      <strong>Output:</strong> <pre className="bg-gray-100 p-2 rounded">{testCase.output}</pre>
                   </li>
                 ))}
               </ul>
@@ -169,7 +206,7 @@ const ProblemDetailsPage = () => {
         </select>
         <br />
 
-        <div className="bg-gray-100 shadow-md w-full max-w-lg mb-4" style={{ height: '300px', overflowY: 'auto' }}>
+        {/* <div className="bg-gray-100 shadow-md w-full max-w-lg mb-4" style={{ height: '300px', overflowY: 'auto' }}>
         <Editor
             value={code}
             onValueChange={code => setCode(code)}
@@ -186,8 +223,20 @@ const ProblemDetailsPage = () => {
             }}
           />
 
+        </div> */}
+          <div className="bg-gray-100 shadow-md w-full max-w-lg mb-4" style={{ height: '300px', overflowY: 'auto' }}>
+          <AceEditor
+            mode="cpp" // Change the mode according to your code language
+            theme="monokai" // Change the theme if needed
+            name="codeEditor"
+            value={code}
+            onChange={code => setCode(code)}
+            fontSize={15}
+            width="100%"
+            height="100%"
+            editorProps={{ $blockScrolling: true }}
+          />
         </div>
-      
 
           {/* { 
           <AceEditor
@@ -212,14 +261,11 @@ const ProblemDetailsPage = () => {
             style={{ width: '100%', height: 'calc(100% - 50px)' }} // Adjusting height for buttons
           />  
           }  */}
-        
-
-
-        
+                
           <div className="mt-4 flex justify-end space-x-4">
          
           {/* Run button */}
-          <button onClick={handleSubmit} type="button" className="w-full text-center mt-4 bg-gradient-to-br from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 focus:outline-none text-white font-medium rounded-lg text-sm px-5 py-2.5">
+          <button onClick={handleRun} type="button" className="w-full text-center mt-4 bg-gradient-to-br from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 focus:outline-none text-white font-medium rounded-lg text-sm px-5 py-2.5">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5 inline-block align-middle me-2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z" />
@@ -229,7 +275,6 @@ const ProblemDetailsPage = () => {
 
           {/* submit button */}
             <button onClick={handleSubmit} className="bg-green-500 text-white px-4 py-3 rounded">Submit</button>
-
           </div>
 
           {/* Right side: Input and Output */}

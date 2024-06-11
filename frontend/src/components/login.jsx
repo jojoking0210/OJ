@@ -265,9 +265,14 @@ const Login = () => {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No token found');
+        }
+  
         const response = await axios.get('http://localhost:5050/api/auth/me', {
           headers: {
-            Authorization: localStorage.getItem('token'),
+            Authorization: `Bearer ${token}`,
           },
         });
         setCurrentUser(response.data.user);
@@ -275,8 +280,10 @@ const Login = () => {
         console.error('Failed to fetch current user:', error);
       }
     };
+  
     fetchCurrentUser();
   }, []);
+
 
   const handleChange = (e) => {
     setFormData({
@@ -293,6 +300,7 @@ const Login = () => {
       if (response.data.success) {
         localStorage.setItem('token', response.data.token);
         setCurrentUser(response.data.user);
+        console.log(response.data.user);
         setShowPopup(true);
         setTimeout(() => {
           setShowPopup(false);
@@ -302,7 +310,7 @@ const Login = () => {
           //   navigate('/problems');
           // }
           // console.log(response.data.user.role);
-          navigate('/ManageProblems');
+          navigate('/problems');
         }, 1000);
       }
     } catch (error) {
@@ -332,8 +340,8 @@ const Login = () => {
         <div className="container mx-auto">
           <div className="text-3xl font-bold">
             <Link to="/">Online Judge</Link>
-          </div>
-          {currentUser && (
+     </div>
+              {/* {currentUser && (
             <div className="text-sm mt-2">
               <span>Welcome, {currentUser.firstname} {currentUser.lastname}</span>
               <button 
@@ -343,8 +351,9 @@ const Login = () => {
                 Logout
               </button>
             </div>
-          )}
+          )}  */}
         </div>
+      
       </header>
       <main className="flex-grow flex flex-col items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">

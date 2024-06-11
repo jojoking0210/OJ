@@ -9,6 +9,7 @@ const cookieParser = require("cookie-parser");
 const {generateFile}= require("./generateFile");
 const {executeCpp}=require("./executeCpp");
 const {generateInputFile} = require("./generateInputFile");
+const Submission = require('./model/Submission'); 
 dotenv.config();
 
 const app = express();
@@ -21,6 +22,37 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+
+// Auth middleware
+const authMiddleware = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) {
+      return res.status(401).send('Access denied. No token provided.');
+    }
+  
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).send('Access denied. No token provided.');
+    }
+  
+    try {
+      const decoded = jwt.verify(token, process.env.SECRET_KEY);
+      req.user = decoded;
+      next();
+    } catch (ex) {
+      res.status(400).send('Invalid token.');
+    }
+  };
+
+  const isAdmin = (req, res, next) => {
+    if (req.user.role !== 'admin') {
+      return res.status(403).send('Access Denied. You do not have the required permissions.');
+    }
+    next();
+  };
+
+
+
 //Connects to the MongoDB database.
 DBConnection();
 
@@ -28,6 +60,104 @@ DBConnection();
 app.get("/", (req, res) => {
     res.send("Hello, world!");
 });
+
+/*
+Gets user data from the request body.
+Checks if all required data is provided.
+Checks if the user already exists.
+Hashes the password for security.
+Saves the new user in the database.
+Creates a token for the user.
+Sends back a success message and the user data (excluding the password).
+*/
+app.post("/register", async (req, res) => {
+    try {
+        const { firstname, lastname, email,role, password } = req.body;
+
+        if (!(firstname, lastname, email, role, password)) {
+            return res.status(400).send("Please enter all the information");
+        }
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(200).send("User already exists!");
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await User.create({
+            firstname,
+            lastname,
+            email,
+            role,
+            password: hashedPassword,
+        });
+
+        const token = jwt.sign({ id: user._id, email }, process.env.SECRET_KEY, {
+            expiresIn: "1d",
+        });
+        user.token = token;
+        user.password = undefined;
+        res.status(200).json({ message: "You have successfully registered!", user });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+/*
+Gets login data from the request body.
+Checks if all required data is provided.
+Finds the user in the database.
+Compares the provided password with the stored hashed password.
+If correct, generates a token for the user.
+Sends back a success message and sets a cookie with the token.
+*/
+
+
+app.post("/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!(email, password)) {
+            return res.status(400).send("Please enter all the information");
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(401).send("User not found!");
+        }
+
+        const enteredPassword = await bcrypt.compare(password, user.password);
+        if (!enteredPassword) {
+            return res.status(401).send("Password is incorrect");
+        }
+
+        const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
+            expiresIn: "1d",
+        });
+        user.token = token;
+        user.password = undefined;
+
+        //stoer cookies
+        const options = {
+            expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+            httpOnly: true, //only manipulated by server not by client/user
+        };
+        //send the token
+        res.status(200).cookie("token", token, options).json({
+            message: "You have successfully logged in!",
+            success: true,
+            token,
+        });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+
+
 
 app.post("/run", async (req, res) => {
     // const language = req.body.language;
@@ -133,140 +263,19 @@ app.put('users/:id/profile',async(req,res)=>{
 
 
 
-/*
-Gets user data from the request body.
-Checks if all required data is provided.
-Checks if the user already exists.
-Hashes the password for security.
-Saves the new user in the database.
-Creates a token for the user.
-Sends back a success message and the user data (excluding the password).
-*/
-app.post("/register", async (req, res) => {
-    try {
-        const { firstname, lastname, email,role, password } = req.body;
-
-        if (!(firstname, lastname, email, role, password)) {
-            return res.status(400).send("Please enter all the information");
-        }
-
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(200).send("User already exists!");
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = await User.create({
-            firstname,
-            lastname,
-            email,
-            role,
-            password: hashedPassword,
-        });
-
-        const token = jwt.sign({ id: user._id, email }, process.env.SECRET_KEY, {
-            expiresIn: "1d",
-        });
-        user.token = token;
-        user.password = undefined;
-        res.status(200).json({ message: "You have successfully registered!", user });
-    } catch (error) {
-        console.log(error);
-        res.status(500).send("Internal Server Error");
-    }
-});
-
-/*
-Gets login data from the request body.
-Checks if all required data is provided.
-Finds the user in the database.
-Compares the provided password with the stored hashed password.
-If correct, generates a token for the user.
-Sends back a success message and sets a cookie with the token.
-*/
-
-
-app.post("/login", async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        if (!(email, password)) {
-            return res.status(400).send("Please enter all the information");
-        }
-
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(401).send("User not found!");
-        }
-
-        const enteredPassword = await bcrypt.compare(password, user.password);
-        if (!enteredPassword) {
-            return res.status(401).send("Password is incorrect");
-        }
-
-        const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
-            expiresIn: "1d",
-        });
-        user.token = token;
-        user.password = undefined;
-
-        //stoer cookies
-        const options = {
-            expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-            httpOnly: true, //only manipulated by server not by client/user
-        };
-        //send the token
-        res.status(200).cookie("token", token, options).json({
-            message: "You have successfully logged in!",
-            success: true,
-            token,
-        });
-    } catch (error) {
-        console.log(error.message);
-        res.status(500).send("Internal Server Error");
-    }
-});
-
-// Auth middleware
-const authMiddleware = (req, res, next) => {
-    const token = req.headers['authorization'];
-    if (!token) {
-        return res.status(401).send('Access denied. No token provided.');
-    }
-
-    try {
-        const decoded = jwt.verify(token, process.env.SECRET_KEY);
-        req.user = decoded;
-        next();
-    } catch (ex) {
-        res.status(400).send('Invalid token.');
-    }
-};
-
-const isAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).send('Access Denied. You do not have the required permissions.');
-  }
-  next();
-};
-
-module.exports = { authMiddleware, isAdmin };
-
-
 // Add this route to get the current user's information
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
-        if (!user) {
-            return res.status(404).send('User not found.');
-        }
-        res.send({ user });
+      const user = await User.findById(req.user.id).select('-password');
+      if (!user) {
+        return res.status(404).send('User not found.');
+      }
+      res.send({ user });
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Internal Server Error');
+      console.error(error);
+      res.status(500).send('Internal Server Error');
     }
-});
+  });
 
 // Logout route
 app.post('/api/auth/logout', authMiddleware, (req, res) => {
@@ -276,7 +285,7 @@ app.post('/api/auth/logout', authMiddleware, (req, res) => {
 
 //problem route
 
-const Problem = require('./model/Problem');
+const Problem = require('./model/problem.js');
 
 app.post('/problems',async (req, res) => {
     const problem = new Problem(req.body);
@@ -368,6 +377,106 @@ app.delete('/problems/:id/testcases/:testCaseId', async (req, res) => {
     }
   });
    
+
+
+  // Submit a solution
+  app.post("/submit", authMiddleware, async (req, res) => {
+      const { problemId, solution, language = 'cpp', input } = req.body;
+  
+      if (!problemId || !solution) {
+          return res.status(400).json({ success: false, error: "Please provide problem ID and solution" });
+      }
+  
+      try {
+          // Generate files
+          const filePath = await generateFile(language, solution);
+          const inputPath = await generateInputFile(input);
+  
+         // Execute the code
+         const output = await executeCpp(filePath, inputPath);
+         console.log(`Generated Output: ${output.trim()}`);
+  
+            // Fetch the problem details
+        const problem = await Problem.findById(problemId);
+        if (!problem) {
+            return res.status(404).json({ message: 'Problem not found' });
+        }
+  
+          let verdict = 'Accepted';
+          let testNumber = 0;
+          for (let testCase of problem.testCases) {
+            testNumber++;
+            const inputPath = await generateInputFile(testCase.input);
+            const output = await executeCpp(filePath, inputPath);
+              console.log(`Comparing with Expected Output: ${testCase.output.trim()} ${output}`);
+              if (output.trim() !== testCase.output.trim()) {
+                  verdict = `Wrong answer on test ${ testNumber}`;
+                //   break;
+              }
+          }
+  
+  
+          // Save the submission
+          const newSubmission = new Submission({
+              userId: req.user.id,
+              problemId,
+              solution,
+              output: output.trim(),
+              verdict
+          });
+          await newSubmission.save();
+  
+          res.status(201).json({ message: "Submission recorded successfully", verdict });
+      } 
+      catch (error) {
+        // if(error.killed){
+        //     verdict = `Time limit exceeded on test ${testNumber}`;
+        //     break;
+        // }
+        // else if(error.stderr){
+        //     verdict = `Runtime error on test ${testNumber}: ${error.stderr}`;
+        //     break;
+        // }
+        // else{
+        //     verdict = `Error on test ${testNumber}: ${error.message}`;
+        //     break;
+        // }
+          console.error(error);
+          res.status(500).json({ error: "Internal Server Error" });
+      }
+  });
+  
+// Get all submissions for a specific problem
+app.get('/submissions/:problemId', authMiddleware, async (req, res) => {
+    try {
+        const submissions = await Submission.find({ problemId: req.params.problemId });
+        res.json(submissions);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Determine verdict of the submitted code
+  const determineVerdict = async (output, problemId) => {
+    try {
+        // Fetch the problem details
+        const response = await axios.get(`http://localhost:5050/problems/${problemId}`);
+        const problem = response.data;
+
+        // Compare the output with each test case
+        for (let testCase of problem.testCases) {
+            if (output.trim() === testCase.output.trim()) {
+                return 'Correct';
+            }
+        }
+
+        return 'Incorrect';
+    } catch (error) {
+        console.error('Error determining verdict:', error);
+        return 'Error';
+    }
+};
+
 
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
