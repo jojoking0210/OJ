@@ -10,8 +10,11 @@ const {generateFile}= require("./generateFile");
 const {executeCpp}=require("./executeCpp");
 const {generateInputFile} = require("./generateInputFile");
 const Submission = require('./model/Submission'); 
+// const validator = require('validator');
 dotenv.config();
 
+// const userRoutes= require('./routes/user');
+// express app
 const app = express();
 const PORT = process.env.PORT || 5050;
 
@@ -61,6 +64,10 @@ app.get("/", (req, res) => {
     res.send("Hello, world!");
 });
 
+//routes
+
+// app.use('api/user',userRoutes);
+
 /*
 Gets user data from the request body.
 Checks if all required data is provided.
@@ -78,6 +85,13 @@ app.post("/register", async (req, res) => {
             return res.status(400).send("Please enter all the information");
         }
 
+        // if(!validator.isEmail(email)){
+        //   return res.status(400).send("Please enter a valid email");
+        // }
+        // if(!validator.isStrongPassword(password)){
+        //   return res.status(400).send("Password is not strong enough");
+        // }
+
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(200).send("User already exists!");
@@ -93,15 +107,16 @@ app.post("/register", async (req, res) => {
             password: hashedPassword,
         });
 
-        const token = jwt.sign({ id: user._id, email }, process.env.SECRET_KEY, {
-            expiresIn: "1d",
-        });
+        const token = jwt.sign(
+          { id: user._id, email, role },
+           process.env.SECRET_KEY,
+          {expiresIn: "1d"});
         user.token = token;
         user.password = undefined;
         res.status(200).json({ message: "You have successfully registered!", user });
     } catch (error) {
         console.log(error);
-        res.status(500).send("Internal Server Error");
+        res.status(500).send("Internal Server Error register");
     }
 });
 
@@ -133,11 +148,21 @@ app.post("/login", async (req, res) => {
             return res.status(401).send("Password is incorrect");
         }
 
-        const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
+        const token = jwt.sign({ id: user._id ,role: user.role }, process.env.SECRET_KEY, {
             expiresIn: "1d",
         });
         user.token = token;
         user.password = undefined;
+
+        const userResponse = {
+          id: user._id,
+          email: user.email,
+          role: user.role,
+          firstname: user.firstname,
+          lastname: user.lastname,
+      };
+
+
 
         //stoer cookies
         const options = {
@@ -149,10 +174,11 @@ app.post("/login", async (req, res) => {
             message: "You have successfully logged in!",
             success: true,
             token,
+            user: userResponse,
         });
     } catch (error) {
         console.log(error.message);
-        res.status(500).send("Internal Server Error");
+        res.status(500).send("Internal Server Error login");
     }
 });
 
@@ -266,7 +292,7 @@ app.put('users/:id/profile',async(req,res)=>{
 // Add this route to get the current user's information
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
     try {
-      const user = await User.findById(req.user.id).select('-password');
+      const user = await User.findById(req.user.id).select('firstname lastname email role');
       if (!user) {
         return res.status(404).send('User not found.');
       }
@@ -411,7 +437,7 @@ app.delete('/problems/:id/testcases/:testCaseId', async (req, res) => {
               console.log(`Comparing with Expected Output: ${testCase.output.trim()} ${output}`);
               if (output.trim() !== testCase.output.trim()) {
                   verdict = `Wrong answer on test ${ testNumber}`;
-                //   break;
+                  // break; // Uncomment this if you want to stop on first wrong answer
               }
           }
   

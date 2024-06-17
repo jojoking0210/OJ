@@ -29,13 +29,16 @@ const Register = () => {
     try {
       const response = await axios.post('http://localhost:5050/register', formData);
       setMessage(response.data.message);
-
       if (response.data.user) {
         setShowPopup(true);
         setTimeout(() => {
           setShowPopup(false);
-          navigate('/login');
-        }, 3000); // Hide popup and redirect after 3 seconds
+          if (response.data.user.role === 'user') {
+            navigate('/problems');
+          } else {
+            navigate('/ManageProblems');
+          }
+        }, 1000); // Hide popup and redirect after 1 seconds
       }
     } catch (error) {
       console.error(error);

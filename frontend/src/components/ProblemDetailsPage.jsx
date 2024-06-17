@@ -65,6 +65,9 @@ const ProblemDetailsPage = () => {
       try {
         // Retrieve the token from local storage or a similar place
         const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Token not found');
+        }
 
         const { data } = await axios.post('http://localhost:5050/submit', payload, {
             headers: {

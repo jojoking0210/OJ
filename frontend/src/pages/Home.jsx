@@ -1,22 +1,63 @@
 // src/components/Home.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import codingBoy from '../assets/hacker-operating-laptop-cartoon-icon-illustration-technology-icon-concept-isolated-flat-cartoon-style.png'; // Make sure to add an image in the assets folder
+import NavBar from '../components/NavBar';
+import axios from 'axios';
 
 const Home = () => {
+
+  const [currentUser, setCurrentUser] = useState(null);
   const userId = '6654972540ff18bf4f09999a'; // Replace with the actual logged-in user ID
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No token found');
+        }
+
+        const response = await axios.get('http://localhost:5050/api/auth/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setCurrentUser(response.data.user);
+      } catch (error) {
+        console.error('Failed to fetch current user:', error);
+      }
+    };
+  
+    fetchCurrentUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await axios.post('http://localhost:5050/api/auth/logout', {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      localStorage.removeItem('token');
+      setCurrentUser(null);
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to logout:', error);
+    }
+  };
+
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
-      <header className="bg-blue-600 w-full py-4 flex justify-between items-center px-4">
+       <NavBar user={currentUser} onLogout={handleLogout} /> 
+      {/* <header className="bg-blue-700 w-full py-4 flex justify-between items-center px-4">
         <h1 className="text-white text-3xl font-bold hover:text-yellow-300 transition duration-300 ease-in-out">
           <Link to="/">Online Judge</Link>
         </h1>
         <nav className="space-x-4 flex items-center">
           <Link to="/ManageProblems" className="text-white hover:text-yellow-300 transition duration-300 ease-in-out">Manage Problems</Link>
-          <Link to={`/users/${userId}/profile`} className="text-white hover:text-yellow-300 transition duration-300 ease-in-out">Profile</Link>
         </nav>
-      </header>
+      </header> */}
       <main className="flex-grow container mx-auto p-4 flex flex-col items-center justify-center">
         <section className="text-center my-16">
           <div className="flex flex-col md:flex-row items-center">
@@ -44,6 +85,9 @@ const Home = () => {
       </main>
       <footer className="bg-blue-600 text-white text-center p-4">
         &copy; 2024 Online Judge. All rights reserved.
+        <h3>
+        Made with ❤ by Pranav Sarate
+        </h3>
       </footer>
     </div>
   );
