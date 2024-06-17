@@ -63,7 +63,7 @@ function App() {
         <Route path="/login" element={<Login setCurrentUser={setCurrentUser} />} />
         <Route path="/problems" element={<ProblemPage />} />
         {/* Example of protected route */}
-        <Route path="/ManageProblems" element={currentUser && currentUser.role === 'admin' ? <ManageProblems /> : <Navigate to="/login" />} />
+        <Route path="/ManageProblems" element={currentUser && currentUser.role === 'admin' ? <ManageProblems /> : <Navigate to="/ManageProblems" />} />
         <Route path="/testcases/:problemId" element={<TestCase />} />
         <Route path="/problems/:problemId" element={<ProblemDetailsPage />} />
         <Route path="/users/:id/profile" element={<ProfilePage />} />

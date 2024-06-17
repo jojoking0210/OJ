@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-
+import NavBar from './NavBar';
 const ProblemPage = () => {
   const [problems, setProblems] = useState([]);
   const [filterTag, setFilterTag] = useState('');
@@ -30,8 +30,48 @@ const ProblemPage = () => {
     );
   });
 
+  const [currentUser, setCurrentUser] = useState(null);
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No token found');
+        }
+
+        const response = await axios.get('http://localhost:5050/api/auth/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setCurrentUser(response.data.user);
+      } catch (error) {
+        console.error('Failed to fetch current user:', error);
+      }
+    };
+  
+    fetchCurrentUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await axios.post('http://localhost:5050/api/auth/logout', {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      localStorage.removeItem('token');
+      setCurrentUser(null);
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to logout:', error);
+    }
+  };
+
+
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-100 p-4">
+       <NavBar user={currentUser} onLogout={handleLogout} /> 
       <header className="bg-blue-600 w-full py-4 text-white text-center mb-8">
         <div className="container mx-auto">
           <h1 className="text-3xl font-bold">Online Judge Problems</h1>

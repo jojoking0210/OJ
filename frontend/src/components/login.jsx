@@ -95,6 +95,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+       <NavBar user={currentUser} onLogout={handleLogout} /> 
       <header className="bg-blue-600 w-full py-4 text-white text-center">
         <div className="container mx-auto">
           <div className="text-3xl font-bold">

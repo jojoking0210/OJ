@@ -8,7 +8,6 @@ import axios from 'axios';
 const Home = () => {
 
   const [currentUser, setCurrentUser] = useState(null);
-  const userId = '6654972540ff18bf4f09999a'; // Replace with the actual logged-in user ID
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
