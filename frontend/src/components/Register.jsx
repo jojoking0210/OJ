@@ -1,7 +1,7 @@
 // src/components/Register.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -48,8 +48,17 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">     
+      <nav className="bg-blue-600 w-full py-4 flex justify-between items-center px-4">
+      <div className="container mx-auto flex justify-between items-center">
+        {/* Logo */}
+        <h1 className="text-white text-xl font-bold">
+          <Link to="/" className="hover:text-yellow-300 transition duration-300 ease-in-out">
+            Online Judge
+          </Link>
+        </h1>
+      </div>
+       </nav>
       <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
-
         
         <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
 

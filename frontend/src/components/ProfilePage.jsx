@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import NavBar from './NavBar';
+import { Link } from 'react-router-dom';
+
 const ProfilePage = () => {
   const { id } = useParams();
   const [user, setUser] = useState(null);
@@ -9,21 +11,44 @@ const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    fetchUser();
-  }, []);
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5050/users/${id}`);
+        setUser(response.data);
+        setEditedUser(response.data);
+      } catch (error) {
+        console.error(error);
+        setMessage('An error occurred while fetching user data.');
+      }
+    };
 
-  const fetchUser = async () => {
-    try {
-      const response = await axios.get(`http://localhost:5050/users/${id}`);
-      setUser(response.data);
-      setEditedUser(response.data);
-    } catch (error) {
-      console.error(error);
-      setMessage('An error occurred while fetching user data.');
-    }
-  };
+    fetchUser();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No token found');
+        }
+
+        const response = await axios.get('http://localhost:5050/api/auth/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setCurrentUser(response.data.user);
+      } catch (error) {
+        console.error('Failed to fetch current user:', error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -65,48 +90,29 @@ const ProfilePage = () => {
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
   };
-  const [currentUser, setCurrentUser] = useState(null);
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('No token found');
-        }
-
-        const response = await axios.get('http://localhost:5050/api/auth/me', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setCurrentUser(response.data.user);
-      } catch (error) {
-        console.error('Failed to fetch current user:', error);
-      }
-    };
-  
-    fetchCurrentUser();
-  }, []);
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:5050/api/auth/logout', {}, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      await axios.post(
+        'http://localhost:5050/api/auth/logout',
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
       localStorage.removeItem('token');
       setCurrentUser(null);
-      navigate('/');
+      // Redirect to home or login page after logout
     } catch (error) {
       console.error('Failed to logout:', error);
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gray-100">
-      <NavBar user={currentUser} onLogout={handleLogout} /> 
+      <NavBar user={currentUser} onLogout={handleLogout} />
       <header className="bg-blue-600 py-4 text-white text-center mb-8">
         <h1 className="text-3xl font-bold">User Profile</h1>
       </header>
@@ -115,11 +121,11 @@ const ProfilePage = () => {
         {user && (
           <div className="bg-white p-8 rounded shadow-md">
             <div className="flex items-center mb-4">
-              <img
+              {/* <img
                 src={user.profilePhoto}
                 alt="Profile"
                 className="w-20 h-20 rounded-full mr-4"
-              />
+              /> */}
               <h2 className="text-3xl font-bold">{user.username}</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -127,9 +133,15 @@ const ProfilePage = () => {
                 <h3 className="text-xl font-semibold mb-2">Personal Info</h3>
                 {!isEditing ? (
                   <>
-                    <p className="text-lg"><strong>First Name:</strong> {user.firstname}</p>
-                    <p className="text-lg"><strong>Last Name:</strong> {user.lastname}</p>
-                    <p className="text-lg"><strong>Email:</strong> {user.email}</p>
+                    <p className="text-lg">
+                      <strong>First Name:</strong> {user.firstname}
+                    </p>
+                    <p className="text-lg">
+                      <strong>Last Name:</strong> {user.lastname}
+                    </p>
+                    <p className="text-lg">
+                      <strong>Email:</strong> {user.email}
+                    </p>
                   </>
                 ) : (
                   <>
@@ -165,30 +177,66 @@ const ProfilePage = () => {
               </div>
               <div className="col-span-1">
                 <h3 className="text-xl font-semibold mb-2">Statistics</h3>
-                <p className="text-lg"><strong>Questions Solved:</strong> {user.questionsSolved}</p>
+                <p className="text-lg">
+                  <strong>Questions Solved:</strong> {user.solvedProblems.length}
+                </p>
               </div>
               <div className="col-span-1">
                 <h3 className="text-xl font-semibold mb-2">Badges</h3>
-                <p className="text-lg"><strong>Badges:</strong> {user.badges
-                                  ? user.badges.join(', ') : 'None'}</p>
-                                  </div>
-                                </div>
-                                <div className="mb-8">
-                                  {!isEditing ? (
-                                    <button onClick={handleEdit} className="bg-blue-500 text-white px-4 py-2 rounded mr-4">Edit Profile</button>
-                                  ) : (
-                                    <>
-                                      <button onClick={handleSave} className="bg-green-500 text-white px-4 py-2 rounded mr-4">Save Changes</button>
-                                      <button onClick={handleCancel} className="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    };
-                    
-                    export default ProfilePage;
-                    
+                <p className="text-lg">
+                  <strong>Badges:</strong>{' '}
+                  {user.badges ? user.badges.join(', ') : 'None'}
+                </p>
+              </div>
+            </div>
+            <div className="mb-8">
+              {!isEditing ? (
+                <button
+                  onClick={handleEdit}
+                  className="bg-blue-500 text-white px-4 py-2 rounded mr-4"
+                >
+                  Edit Profile
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleSave}
+                    className="bg-green-500 text-white px-4 py-2 rounded mr-4"
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="bg-gray-500 text-white px-4 py-2 rounded"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+        {user && user.solvedProblems.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-4">Solved Problems</h2>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {user.solvedProblems.map((problemId) => (
+                
+                <li key={problemId} className="bg-white rounded-lg shadow-md p-4">
+                  <Link
+                    to={`/problems/${problemId}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {problemId}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ProfilePage;

@@ -12,15 +12,18 @@
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
+    "@fortawesome/react-fontawesome": "github:fortawesome/react-fontawesome",
     "@mui/material": "^5.15.19",
     "@uiw/react-codemirror": "^4.22.1",
     "axios": "^1.7.2",
     "brace": "^0.11.1",
     "codemirror": "^6.0.1",
+    "fortawesome": "^0.0.1-security",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
     "react-ace": "^11.0.1",
     "react-dom": "^18.2.0",
+    "react-modal": "^3.16.1",
     "react-router-dom": "^6.23.1",
     "react-simple-code-editor": "^0.13.1"
   },

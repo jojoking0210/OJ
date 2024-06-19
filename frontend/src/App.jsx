@@ -11,6 +11,7 @@ import ManageProblems from './components/ManageProblems';
 import TestCase from './components/testcases'; // Ensure the file name matches the case
 import ProfilePage from './components/ProfilePage';
 import NavBar from './components/NavBar';
+import AllSubmissions from './components/AllSubmissionPage';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -67,6 +68,7 @@ function App() {
         <Route path="/testcases/:problemId" element={<TestCase />} />
         <Route path="/problems/:problemId" element={<ProblemDetailsPage />} />
         <Route path="/users/:id/profile" element={<ProfilePage />} />
+        <Route path="/submissions" element={<AllSubmissions />} />
       </Routes>
     </BrowserRouter>
   );

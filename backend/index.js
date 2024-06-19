@@ -10,6 +10,7 @@ const {generateFile}= require("./generateFile");
 const {executeCpp}=require("./executeCpp");
 const {generateInputFile} = require("./generateInputFile");
 const Submission = require('./model/Submission'); 
+const Problem = require('./model/problem.js');
 // const validator = require('validator');
 dotenv.config();
 
@@ -258,7 +259,7 @@ app.get('/users/:id', async (req, res) => {
   });
 
     
-app.get('users/:id/profile',async(req,res)=>{
+app.get('/users/:id/profile',async(req,res)=>{
     try {
         const user =await User.findById(req.params.id);
         if(!user){
@@ -266,11 +267,11 @@ app.get('users/:id/profile',async(req,res)=>{
         }
         res.status(200).send(user);
     } catch (error) {
-        res.status(500).send(error.message);
+        res.status(500).send('profile error',error.message);
     }
 });
 
-app.put('users/:id/profile',async(req,res)=>{
+app.put('/users/:id/profile',async(req,res)=>{
     try {
         const { username, profilePhoto, questionsSolved } = req.body;
         const user = await User.findByIdAndUpdate(
@@ -285,6 +286,24 @@ app.put('users/:id/profile',async(req,res)=>{
       } catch (error) {
         res.status(500).send(error.message);
       }
+});
+
+// Correct route definition with '/api' prefix and proper parameter name
+app.get('/api/users/:userId/solvedProblems', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const user = await User.findById(userId).populate('solvedProblems');
+  
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    // Fetch solved problems for the user from the database
+    const solvedProblems = user.solvedProblems.map(problem => problem._id);
+    res.json({ solvedProblems });
+  } catch (error) {
+    console.error('Error fetching solved problems:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 
@@ -311,15 +330,13 @@ app.post('/api/auth/logout', authMiddleware, (req, res) => {
 
 //problem route
 
-const Problem = require('./model/problem.js');
-
 app.post('/problems',async (req, res) => {
     const problem = new Problem(req.body);
     await problem.save();
     res.status(201).send(problem);
 });
 
-app.get('/problems', async (req, res) => {
+app.get('/problems',async (req, res) => {
     const problems = await Problem.find();
     res.send(problems);
 });
@@ -451,7 +468,17 @@ app.delete('/problems/:id/testcases/:testCaseId', async (req, res) => {
               verdict
           });
           await newSubmission.save();
-  
+            // If verdict is Accepted, update user's solvedProblems array
+          if (verdict === 'Accepted') {
+            const user = await User.findById(req.user.id);
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+            if (!user.solvedProblems.includes(problemId)) {
+                user.solvedProblems.push(problemId);
+                await user.save();
+            }
+          }
           res.status(201).json({ message: "Submission recorded successfully", verdict });
       } 
       catch (error) {
@@ -471,7 +498,24 @@ app.delete('/problems/:id/testcases/:testCaseId', async (req, res) => {
           res.status(500).json({ error: "Internal Server Error" });
       }
   });
+
+  // Get all submissions route
+// Get all submissions route
+app.get('/submissions', authMiddleware, async (req, res) => {
+  try {
+    const submissions = await Submission.find()
+    .populate('userId', 'email') // Example: Populate user's firstname and lastname
+    .populate('problemId', 'name') // Populate problem's name
   
+      .sort({ date: -1 }); // Sort by date in descending order
+    res.json(submissions);
+  } catch (error) {
+    console.error("Error fetching submissions:", error);
+    res.status(500).json({ error: "Failed to fetch submissions" });
+  }
+});
+
+
 // Get all submissions for a specific problem
 app.get('/submissions/:problemId', authMiddleware, async (req, res) => {
     try {

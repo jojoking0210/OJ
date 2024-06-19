@@ -10,4 +10,15 @@ const SubmissionSchema = new Schema({
     date: { type: Date, default: Date.now }
 });
 
+// SubmissionSchema.post('save', async function (doc) {
+//     if (doc.verdict === 'Accepted') {
+//       const user = await mongoose.model('User').findById(doc.userId);
+//       if (!user.solvedProblems.includes(doc.problemId)) {
+//         user.solvedProblems.push(doc.problemId);
+//         user.problem_count = user.solvedProblems.length;
+//         await user.save();
+//       }
+//     }
+//   });
+
 module.exports = mongoose.model('Submission', SubmissionSchema);
