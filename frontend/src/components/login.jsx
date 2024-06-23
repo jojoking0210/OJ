@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import HomeButton from './HomeButton';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import NavBar from './NavBar';
-
-
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
-  const [message, setMessage] = useState('');
   const [showPopup, setShowPopup] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
@@ -34,10 +32,9 @@ const Login = () => {
         console.error('Failed to fetch current user:', error);
       }
     };
-  
+
     fetchCurrentUser();
   }, []);
-
 
   const handleChange = (e) => {
     setFormData({
@@ -50,31 +47,27 @@ const Login = () => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:5050/login', formData);
-      setMessage(response.data.message);
+      if (response.data.message) {
+        toast.success(response.data.message);
+      }
       if (response.data.success) {
         localStorage.setItem('token', response.data.token);
-        console.log('Login response:', response);  // Add this line to log the response
+        console.log('Login response:', response); // Add this line to log the response
         setCurrentUser(response.data.user);
         console.log(response.data.user);
         setShowPopup(true);
         setTimeout(() => {
           setShowPopup(false);
           if (response.data && response.data.user) {
-            // if (response.data.user.role === 'user') {
-            //   navigate('/problems');
-            // } else {
-            //   navigate('/');
-            // }
             navigate('/');
           } else {
             console.error('User data is not available in the response');
             // Handle the case where user data is not present
           }
-         
-        }, 1000);
+        }, 3000);
       }
     } catch (error) {
-      setMessage('An error occurred during login. Please try again.');
+      toast.error('An error occurred during login. Please try again.');
     }
   };
 
@@ -95,31 +88,18 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-       <NavBar user={currentUser} onLogout={handleLogout} /> 
-      <header className="bg-blue-600 w-full py-4 text-white text-center">
+      <ToastContainer />
+      <NavBar user={currentUser} onLogout={handleLogout} />
+      {/* <header className="bg-blue-600 w-full py-4 text-white text-center">
         <div className="container mx-auto">
           <div className="text-3xl font-bold">
             <Link to="/">Online Judge</Link>
-     </div>
-     {/* <NavBar user={currentUser} onLogout={handleLogout} />  */}
-              {/* {currentUser && (
-            <div className="text-sm mt-2">
-              <span>Welcome, {currentUser.firstname} {currentUser.lastname}</span>
-              <button 
-                onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 ml-4 rounded"
-              >
-                Logout
-              </button>
-            </div>
-          )}  */}
+          </div>
         </div>
-      
-      </header>
+      </header> */}
       <main className="flex-grow flex flex-col items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
           <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
-          {message && <p className="mb-4 text-center text-red-600">{message}</p>}
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
@@ -175,6 +155,9 @@ const Login = () => {
       <footer className="bg-blue-600 w-full py-4 text-white text-center">
         <div className="container mx-auto">
           &copy; 2024 Online Judge. All rights reserved.
+          <h3>
+        Made with ❤ by Pranav Sarate
+        </h3>
         </div>
       </footer>
     </div>

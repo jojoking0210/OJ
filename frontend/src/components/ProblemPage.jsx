@@ -10,6 +10,8 @@ const ProblemPage = () => {
   const [solvedProblems, setSolvedProblems] = useState([]);
   const [filterTag, setFilterTag] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
+  const [tags, setTags] = useState([]);
+  const [difficulties, setDifficulties] = useState([]);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,6 +19,8 @@ const ProblemPage = () => {
 
   useEffect(() => {
     fetchProblems();
+    fetchTags();
+    fetchDifficulties();
   }, []);
 
   // Fetching Problems from Backend
@@ -30,6 +34,28 @@ const ProblemPage = () => {
       console.error('Error fetching problems:', error);
       setError('Error fetching problems');
       setLoading(false);
+    }
+  };
+
+  // Fetching Tags from Backend
+  const fetchTags = async () => {
+    try {
+      const response = await axios.get('http://localhost:5050/api/problems/tags');
+      setTags(response.data);
+      console.log('Fetched tags:', response.data);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    }
+  };
+
+  // Fetching Difficulties from Backend
+  const fetchDifficulties = async () => {
+    try {
+      const response = await axios.get('http://localhost:5050/api/problems/difficulties');
+      setDifficulties(response.data);
+      console.log('Fetched difficulties:', response.data);
+    } catch (error) {
+      console.error('Error fetching difficulties:', error);
     }
   };
 
@@ -120,9 +146,9 @@ const ProblemPage = () => {
               className="border p-2 rounded"
             >
               <option value="">All</option>
-              <option value="Array">Array</option>
-              <option value="String">String</option>
-              <option value="Basic">Basic</option>
+              {tags.map(tag => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
             </select>
           </div>
           {/* Filter by Difficulty */}
@@ -134,9 +160,9 @@ const ProblemPage = () => {
               className="border p-2 rounded"
             >
               <option value="">All</option>
-              <option value="easy">easy</option>
-              <option value="medium">medium</option>
-              <option value="hard">hard</option>
+              {difficulties.map(difficulty => (
+                <option key={difficulty} value={difficulty}>{difficulty}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -190,6 +216,9 @@ const ProblemPage = () => {
       </div>
       <footer className="bg-blue-600 w-full py-4 text-white text-center mt-auto">
         <div className="container mx-auto">&copy; 2024 Online Judge. All rights reserved.</div>
+        <h3>
+        Made with ❤ by Pranav Sarate
+        </h3>
       </footer>
     </div>
   );

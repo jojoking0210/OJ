@@ -13,6 +13,12 @@ import ProfilePage from './components/ProfilePage';
 import NavBar from './components/NavBar';
 import AllSubmissions from './components/AllSubmissionPage';
 
+const PrivateRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/login" />;
+};
+
+
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -66,9 +72,17 @@ function App() {
         {/* Example of protected route */}
         <Route path="/ManageProblems" element={currentUser && currentUser.role === 'admin' ? <ManageProblems /> : <Navigate to="/ManageProblems" />} />
         <Route path="/testcases/:problemId" element={<TestCase />} />
-        <Route path="/problems/:problemId" element={<ProblemDetailsPage />} />
+        <Route path="/problems/:problemId" element={currentUser  && <ProblemDetailsPage />} />
         <Route path="/users/:id/profile" element={<ProfilePage />} />
         <Route path="/submissions" element={<AllSubmissions />} />
+        <Route
+          path="/problems"
+          element={
+            <PrivateRoute>
+              <ProblemPage />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

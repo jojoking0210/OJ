@@ -76,7 +76,8 @@ const Home = () => {
                 <li>Wide range of problems in different categories and difficulty levels.</li>
                 <li>Real-time code evaluation and feedback.</li>
                 <li>Detailed statistics and rankings.</li>
-                <li>Community discussions and problem solutions.</li>
+                <li>Separate profile of each user</li>
+                <li>Problem solutions.</li>
               </ul>
             </div>
           </div>

@@ -10,8 +10,11 @@ const {generateFile}= require("./generateFile");
 const {executeCpp}=require("./executeCpp");
 const {generateInputFile} = require("./generateInputFile");
 const Submission = require('./model/Submission'); 
-const Problem = require('./model/problem.js');
+const Problem = require('./model/Problem.js');
+const {executePython} = require("./executePython");
+const {executeJava} = require("./executeJava");
 // const validator = require('validator');
+const problemRoutes = require('./routes/problemTag.route.js'); // Import the routes
 dotenv.config();
 
 // const userRoutes= require('./routes/user');
@@ -25,7 +28,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
+app.use('/api/problems', problemRoutes); // Register the routes
 
 // Auth middleware
 const authMiddleware = (req, res, next) => {
@@ -78,48 +81,47 @@ Saves the new user in the database.
 Creates a token for the user.
 Sends back a success message and the user data (excluding the password).
 */
-app.post("/register", async (req, res) => {
-    try {
-        const { firstname, lastname, email,role, password } = req.body;
+  app.post("/register", async (req, res) => {
+      try {
+          const { firstname, lastname, email,role, password } = req.body;
 
-        if (!(firstname, lastname, email, role, password)) {
-            return res.status(400).send("Please enter all the information");
-        }
+          if (!(firstname, lastname, email, role, password)) {
+              return res.status(400).send("Please enter all the information");
+          }
 
-        // if(!validator.isEmail(email)){
-        //   return res.status(400).send("Please enter a valid email");
-        // }
-        // if(!validator.isStrongPassword(password)){
-        //   return res.status(400).send("Password is not strong enough");
-        // }
+          // if(!validator.isEmail(email)){
+          //   return res.status(400).send("Please enter a valid email");
+          // }
+          // if(!validator.isStrongPassword(password)){
+          //   return res.status(400).send("Password is not strong enough");
+          // }
 
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(200).send("User already exists!");
-        }
+          const existingUser = await User.findOne({ email });
+          if (existingUser) {
+            return res.status(409).json({ error: "User already exists!" });          }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+          const hashedPassword = await bcrypt.hash(password, 10);
 
-        const user = await User.create({
-            firstname,
-            lastname,
-            email,
-            role,
-            password: hashedPassword,
-        });
+          const user = await User.create({
+              firstname,
+              lastname,
+              email,
+              role,
+              password: hashedPassword,
+          });
 
-        const token = jwt.sign(
-          { id: user._id, email, role },
-           process.env.SECRET_KEY,
-          {expiresIn: "1d"});
-        user.token = token;
-        user.password = undefined;
-        res.status(200).json({ message: "You have successfully registered!", user });
-    } catch (error) {
-        console.log(error);
-        res.status(500).send("Internal Server Error register");
-    }
-});
+          const token = jwt.sign(
+            { id: user._id, email, role },
+            process.env.SECRET_KEY,
+            {expiresIn: "1d"});
+          user.token = token;
+          user.password = undefined;
+          res.status(200).json({ message: "You have successfully registered!", user });
+      } catch (error) {
+          console.log(error);
+          res.status(500).send("Internal Server Error register");
+      }
+  });
 
 /*
 Gets login data from the request body.
@@ -165,7 +167,7 @@ app.post("/login", async (req, res) => {
 
 
 
-        //stoer cookies
+        //store cookies
         const options = {
             expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
             httpOnly: true, //only manipulated by server not by client/user
@@ -182,29 +184,6 @@ app.post("/login", async (req, res) => {
         res.status(500).send("Internal Server Error login");
     }
 });
-
-
-
-
-app.post("/run", async (req, res) => {
-    // const language = req.body.language;
-    // const code = req.body.code;
-
-    const { language = 'cpp', code, input } = req.body;
-    if (code === undefined) {
-        return res.status(404).json({ success: false, error: "Empty code!" });
-    }
-    try {
-        const filePath = await generateFile(language, code);
-        const inputPath = await generateInputFile(input);
-        const output = await executeCpp(filePath,inputPath);
-        res.json({ filePath, inputPath, output });
-    } catch (error) {
-        console.error(error); // Log the error for debugging
-        res.status(500).json({ error: error });
-    }
-});
-
 
 //Post user
 app.post('/users', async (req, res) => {
@@ -420,11 +399,44 @@ app.delete('/problems/:id/testcases/:testCaseId', async (req, res) => {
     }
   });
    
+  app.post("/run", async (req, res) => {
+    // const language = req.body.language;
+    // const code = req.body.code;
+
+    const { language , code, input } = req.body;
+    if (code === undefined) {
+        return res.status(404).json({ success: false, error: "Empty code!" });
+    }
+    try {
+      const filePath = await generateFile(language, code);
+      const inputPath = await generateInputFile(input);
+
+      let output;
+      switch (language) {
+          case 'cpp':
+              output = await executeCpp(filePath, inputPath);
+              break;
+          case 'java':
+              output = await executeJava(filePath, inputPath);
+              break;
+          case 'python':
+              output = await executePython(filePath, inputPath);
+              break;
+          default:
+              throw new Error("Unsupported language");
+      }
+        res.json({ filePath, inputPath, output });
+    } catch (error) {
+        console.error(error); // Log the error for debugging
+        res.status(500).json({ error: error });
+    }
+});
+
 
 
   // Submit a solution
   app.post("/submit", authMiddleware, async (req, res) => {
-      const { problemId, solution, language = 'cpp', input } = req.body;
+      const { problemId, solution, language , input } = req.body;
   
       if (!problemId || !solution) {
           return res.status(400).json({ success: false, error: "Please provide problem ID and solution" });
@@ -435,10 +447,22 @@ app.delete('/problems/:id/testcases/:testCaseId', async (req, res) => {
           const filePath = await generateFile(language, solution);
           const inputPath = await generateInputFile(input);
   
-         // Execute the code
-         const output = await executeCpp(filePath, inputPath);
+         // Execute the code based on language
+         let output;
+         switch (language) {
+             case 'cpp':
+                 output = await executeCpp(filePath, inputPath);
+                 break;
+             case 'java':
+                 output = await executeJava(filePath, inputPath);
+                 break;
+             case 'python':
+                 output = await executePython(filePath, inputPath);
+                 break;
+             default:
+                 throw new Error("Unsupported language");
+         }
          console.log(`Generated Output: ${output.trim()}`);
-  
             // Fetch the problem details
         const problem = await Problem.findById(problemId);
         if (!problem) {
@@ -454,7 +478,7 @@ app.delete('/problems/:id/testcases/:testCaseId', async (req, res) => {
               console.log(`Comparing with Expected Output: ${testCase.output.trim()} ${output}`);
               if (output.trim() !== testCase.output.trim()) {
                   verdict = `Wrong answer on test ${ testNumber}`;
-                  // break; // Uncomment this if you want to stop on first wrong answer
+                  break; // Uncomment this if you want to stop on first wrong answer
               }
           }
   
@@ -547,6 +571,15 @@ app.get('/submissions/:problemId', authMiddleware, async (req, res) => {
     }
 };
 
+// Endpoint to get unique tags
+app.get('/tags', async (req, res) => {
+  try {
+    const tags = await Problem.distinct('tag');
+    res.json(tags);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);

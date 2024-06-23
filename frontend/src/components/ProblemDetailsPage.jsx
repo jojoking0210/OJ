@@ -1,134 +1,95 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import AceEditor from 'react-ace';
-import 'brace/mode/javascript';
-import 'brace/theme/monokai';
-import 'ace-builds/src-noconflict/mode-javascript';
-import 'ace-builds/src-noconflict/theme-monokai';
-
-import Editor from 'react-simple-code-editor';
-import { highlight, languages } from 'prismjs/components/prism-core';
-import 'prismjs/components/prism-clike';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/themes/prism.css';
-import '../App.css';
-import NavBar from './NavBar';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import AceEditor from "react-ace";
+import Split from "react-split";
+import "brace/mode/javascript";
+import "brace/theme/monokai";
+import "brace/theme/github"; // Import additional themes as needed
+import "brace/theme/tomorrow";
+import "brace/theme/twilight";
+import "brace/theme/xcode";
+import "brace/theme/solarized_light";
+import "brace/theme/solarized_dark";
+import "brace/theme/kuroir";
+import "brace/theme/terminal";
+import "brace/theme/vibrant_ink";
+import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/theme-monokai";
+import NavBar from "./NavBar";
+import { AiFillLike, AiFillDislike } from "react-icons/ai";
+import { BsCheck2Circle } from "react-icons/bs";
+import { TiStarOutline } from "react-icons/ti";
+import "../App.css"; // Import your CSS file
 
 const ProblemDetailsPage = () => {
   const { problemId } = useParams();
+  const navigate = useNavigate();
   const [problem, setProblem] = useState(null);
   const [testCases, setTestCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTestCases, setSelectedTestCases] = useState([]);
-  const [leftWidth, setLeftWidth] = useState(50); // Default width percentage for the left pane
   const [code, setCode] = useState(`
   #include <bits/stdc++.h> 
   using namespace std;
 
   // Define the main function
   int main() { 
-
-     cout<<"Hello World!"<<endl;
-
-      return 0; 
+   cout<<"Hello World!"<<endl;
+   return 0; 
   }
-  `);
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [problem_Id, setProblemId] = useState('');
-  const handleRun = async () => {
-    const payload = {
-      language: 'cpp',
-      code,
-      input
-    };
-
-    try {
-      const { data } = await axios.post('http://localhost:5050/run', payload);
-      console.log(data);
-      setOutput(data.output); 
-    } catch (error) {
-      console.log(error.response);
-    }
-  }
-
-  const [verdict, setVerdict] = useState('');
-  const handleSubmit = async () => {
-      const payload = {
-          problemId, // Assuming problemId is available in the component's state or props
-          language: 'cpp',
-          solution: code,
-          input // Ensure input is provided or handled correctly in your component
-      };
   
-      try {
-        // Retrieve the token from local storage or a similar place
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('Token not found');
-        }
+  `);
 
-        const { data } = await axios.post('http://localhost:5050/submit', payload, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        console.log("Response Data:", data);
+  const getInitialCode = (language) => {
+    switch (language) {
+      case "cpp":
+        return `#include <bits/stdc++.h> 
+using namespace std;
 
-        if (data && data.verdict) {
-            setVerdict(data.verdict);
-            setOutput(data.verdict); // Assuming setOutput is a state function to display the output
-        } else {
-            console.error("Invalid response data:", data);
-            setOutput("Error: Invalid response from server");
-        }
-    } catch (error) {
-        console.error("Error submitting code:", error);
-        setOutput("Error: Failed to submit code");
+// Define the main function
+int main() { 
+ cout<<"Hello World!"<<endl;
+ return 0; 
+}`;
+      case "python":
+        return `# This program prints Hello, world!
+
+print('Hello World!')`;
+      default:
+        return "";
     }
   };
 
-  
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState("");
+  const [verdict, setVerdict] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+  const [selectedLanguage, setSelectedLanguage] = useState("cpp");
+  const [selectedTheme, setSelectedTheme] = useState("monokai"); // Default theme
+
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         if (!token) {
-          throw new Error('No token found');
+          throw new Error("No token found");
         }
 
-        const response = await axios.get('http://localhost:5050/api/auth/me', {
+        const response = await axios.get("http://localhost:5050/api/auth/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         setCurrentUser(response.data.user);
       } catch (error) {
-        console.error('Failed to fetch current user:', error);
+        console.error("Failed to fetch current user:", error);
       }
     };
-  
+
     fetchCurrentUser();
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      await axios.post('http://localhost:5050/api/auth/logout', {}, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      localStorage.removeItem('token');
-      setCurrentUser(null);
-      navigate('/');
-    } catch (error) {
-      console.error('Failed to logout:', error);
-    }
-  };
-
 
   useEffect(() => {
     fetchProblemDetails();
@@ -137,7 +98,9 @@ const ProblemDetailsPage = () => {
 
   const fetchProblemDetails = async () => {
     try {
-      const response = await axios.get(`http://localhost:5050/problems/${problemId}`);
+      const response = await axios.get(
+        `http://localhost:5050/problems/${problemId}`
+      );
       setProblem(response.data);
       setLoading(false);
     } catch (error) {
@@ -149,7 +112,9 @@ const ProblemDetailsPage = () => {
 
   const fetchTestCases = async () => {
     try {
-      const response = await axios.get(`http://localhost:5050/problems/${problemId}/testcases`);
+      const response = await axios.get(
+        `http://localhost:5050/problems/${problemId}/testcases`
+      );
       setTestCases(response.data);
     } catch (error) {
       console.error("Error fetching test cases:", error);
@@ -157,30 +122,102 @@ const ProblemDetailsPage = () => {
     }
   };
 
+  const handleRun = async () => {
+    const payload = {
+      language: selectedLanguage,
+      code,
+      input,
+    };
+
+    try {
+      const { data } = await axios.post("http://localhost:5050/run", payload);
+      setOutput(data.output);
+    } catch (error) {
+      console.log(error.response);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const payload = {
+      problemId,
+      language: selectedLanguage,
+      solution: code,
+      input,
+    };
+    console.log(payload);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Token not found");
+      }
+
+      const { data } = await axios.post(
+        "http://localhost:5050/submit",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (data && data.verdict) {
+        setVerdict(data.verdict);
+        setOutput(data.verdict); // Assuming setOutput is a state function to display the output
+      } else {
+        console.error("Invalid response data:", data);
+        setOutput("Error: Invalid response from server");
+      }
+    } catch (error) {
+      console.error("Error submitting code:", error);
+      setOutput("Error: Failed to submit code");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        "http://localhost:5050/api/auth/logout",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      localStorage.removeItem("token");
+      setCurrentUser(null);
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to logout:", error);
+    }
+  };
+
   const toggleTestCaseSelection = (id) => {
-    setSelectedTestCases(prevState => {
+    setSelectedTestCases((prevState) => {
       if (prevState.includes(id)) {
-        return prevState.filter(tcId => tcId !== id);
+        return prevState.filter((tcId) => tcId !== id);
       } else {
         return [...prevState, id];
       }
     });
   };
-  
 
-  const handleMouseDown = (e) => {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+  const handleThemeChange = (e) => {
+    setSelectedTheme(e.target.value);
   };
-
-  const handleMouseMove = (e) => {
-    const newWidth = (e.clientX / window.innerWidth) * 100;
-    setLeftWidth(newWidth);
-  };
-
-  const handleMouseUp = () => {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
+  const getColorClass = (difficulty) => {
+    switch (difficulty) {
+      case "easy":
+        return "bg-green-300 text-green-900"; // Green background for easy
+      case "medium":
+        return "bg-yellow-300 text-yellow-900"; // Yellow background for medium
+      case "hard":
+        return "bg-red-300 text-red-900"; // Red background for hard
+      default:
+        return "bg-gray-300 text-gray-900"; // Default gray background
+    }
   };
 
   if (loading) {
@@ -193,161 +230,197 @@ const ProblemDetailsPage = () => {
 
   return (
     <div className="flex flex-col h-screen">
-    <NavBar user={currentUser} onLogout={handleLogout} />
-    <div className="flex-1 flex">
-  {/* Left Pane */}
-  <div className="overflow-auto p-4" style={{ width: `${leftWidth}%` }}>
-    {problem ? (
-      <>
-        <h2 className="text-2xl font-bold mb-4">{problem.name}</h2>
-        <p className="text-base font-medium text-gray-700 mb-4" style={{ lineHeight: '1.5' }}>
-          {problem.description}
-        </p>
+      <NavBar user={currentUser} onLogout={handleLogout} />
+      <Split
+        className="flex flex-1 split"
+        direction="horizontal"
+        minSize={200}
+        sizes={[50, 50]}
+      >
+        {/* Left Pane */}
+        <div className="overflow-auto p-4 bg-white-50">
+          {problem ? (
+            <>
+              <div>
+                <h2 className="text-2xl font-bold mb-4">{problem.name}</h2>
+                <div style={{ display: "inline-block" }}>
+                  <span
+                    className={`text-xs font-medium px-2.5 py-1 rounded-[21px] ${getColorClass(
+                      problem.difficulty
+                    )}`}
+                  >
+                    {problem.difficulty}
+                  </span>
+                </div>
+              </div>
 
-        <h3 className="text-xl font-bold mb-2">Test Cases</h3>
-        <ul className="list-disc list-inside">
-          {testCases.map((testCase) => (
-            <li key={testCase._id} className="mb-2">
-              <strong>Input:</strong> <pre className="bg-gray-100 p-2 rounded">{testCase.input}</pre>
-              <strong>Output:</strong> <pre className="bg-gray-100 p-2 rounded">{testCase.output}</pre>
-            </li>
-          ))}
-        </ul>
+              <p className="text-lg text-black mb-4 whitespace-pre-wrap">
+                {renderDescription(problem.description)}
+              </p>
+              {/*               
+              <h3 className="text-lg font-bold mb-2">Test Cases</h3>
+              <ul className="list-disc list-inside">
+                {testCases.map((testCase) => (
+                  <li key={testCase._id} className="mb-2">
+                    <strong>Input:</strong>
+                    <pre className="bg-gray-100 p-2 rounded">{testCase.input}</pre>
+                    <strong>Output:</strong>
+                    <pre className="bg-gray-100 p-2 rounded">{testCase.output}</pre>
+                  </li>
+                ))}
+              </ul> */}
 
-        <h3 className="text-xl font-bold mb-2">Constraints</h3>
-        <p className="mb-4">{problem.constraints}</p>
+              <h3 className="text-lg font-bold mb-2">Constraints</h3>
+              <p className="mb-4">{problem.constraints}</p>
 
-        <h3 className="text-l font-bold mb-2">Time Limit: 1s</h3>
-        <p className="mb-4">{problem.constraints}</p>
-
-        <h3 className="text-l font-bold mb-2">Memory Limit: 100Mb</h3>
-        <p className="mb-4">{problem.constraints}</p>
-      </>
-    ) : (
-      <p>No problem data available</p>
-    )}
-  </div>
-
-  {/* Divider */}
-  <div
-    className="w-1 bg-gray-300 cursor-ew-resize"
-    onMouseDown={handleMouseDown}
-  ></div>
-
-  {/* Right Pane */}
-  <div className="flex-1 p-4" style={{ width: `${100 - leftWidth}%` }}>
-    <h1 className="text-3xl font-bold mb-4">Code Editor</h1>
-    <select className="select-box border border-gray-300 rounded-lg py-1.5 px-4 mb-4 focus:outline-none focus:border-indigo-500">
-      <option value="cpp">C++</option>
-      <option value="c">C</option>
-      <option value="py">Python</option>
-      <option value="java">Java</option>
-    </select>
-
-    <div className="bg-gray-100 shadow-md w-full max-w-lg mb-4" style={{ height: '300px', overflowY: 'auto' }}>
-      <AceEditor
-        mode="cpp"
-        theme="monokai"
-        name="codeEditor"
-        value={code}
-        onChange={setCode}
-        fontSize={15}
-        width="100%"
-        height="100%"
-        editorProps={{ $blockScrolling: true }}
-      />
-    </div>
-
-    <div className="flex justify-end space-x-4">
-      {/* Run button */}
-      <button onClick={handleRun} type="button" className="w-full text-center bg-gradient-to-br from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 focus:outline-none text-white font-medium rounded-lg text-sm px-5 py-2.5">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5 inline-block align-middle me-2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z" />
-        </svg>
-        Run
-        </button>
-
-        {/* Submit button */}
-        <button onClick={handleSubmit} className="bg-green-500 text-white px-4 py-3 rounded">
-          Submit
-        </button>
-      </div>
-
-      {/* Input and Output */}
-      <div className="flex justify-between mt-4">
-        <div className="w-1/2 pr-2">
-          <h2 className="text-lg font-semibold mb-2">Input</h2>
-          <textarea
-            rows="5"
-            value={input}
-            placeholder="Input"
-            onChange={(e) => setInput(e.target.value)}
-            className="border border-gray-300 rounded-sm py-1.5 px-4 mb-1 focus:outline-none focus:border-indigo-500 resize-none w-full"
-            style={{ minHeight: '100px' }}
-          ></textarea>
+              <h3 className="text-lg font-bold mb-2">Time Limit: 1s</h3>
+              <h3 className="text-lg font-bold mb-2">Memory Limit: 100Mb</h3>
+            </>
+          ) : (
+            <p>No problem data available</p>
+          )}
         </div>
 
-        <div className="w-1/2 pl-2">
-          <h2 className="text-lg font-semibold mb-2">Output</h2>
-          <div className="bg-gray-100 rounded-sm shadow-md p-4" style={{ minHeight: '100px' }}>
-            <pre style={{ fontFamily: '"Fira code", "Fira Mono", monospace', fontSize: 12 }}>{output}</pre>
-          </div>
-        </div>
-      </div>
+        {/* Right Pane */}
+        <div className="flex-1 p-4">
+      
+            <div className="flex items-center mb-4">
+              <span className="text-lg font-semibold mr-2">Theme:</span>
+              <select
+                value={selectedTheme}
+                onChange={handleThemeChange}
+                className="select-box border border-gray-300 rounded-lg py-1.5 px-4 focus:outline-none focus:border-indigo-500"
+              >
+                <option value="monokai">Monokai</option>
+                <option value="github">GitHub</option>
+                <option value="tomorrow">Tomorrow</option>
+                <option value="twilight">Twilight</option>
+                <option value="xcode">XCode</option>
+                <option value="solarized_light">Solarized Light</option>
+                <option value="solarized_dark">Solarized Dark</option>
+                <option value="kuroir">Kuroir</option>
+                <option value="terminal">Terminal</option>
+                <option value="vibrant_ink">Vibrant Ink</option>
+              </select>
+
+              <span className="text-lg font-semibold ml-4 mr-2">Language:</span>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => {
+                  setSelectedLanguage(e.target.value);
+                  setCode(getInitialCode(e.target.value)); // Update code template based on selected language
+                }}
+                className="select-box border border-gray-300 rounded-lg py-1.5 px-4 focus:outline-none focus:border-indigo-500"
+              >
+                <option value="cpp">C++</option>
+                <option value="python">Python</option>
+              </select>
+            </div>
+          
+            <div
+              className="bg-white shadow-md rounded-lg p-4 mb-4"
+              style={{ height: "400px" }}
+            >
+              <AceEditor
+                mode={selectedLanguage === "cpp" ? "c_cpp" : "python"} // Set Ace Editor mode dynamically
+                theme={selectedTheme}
+                name="editor"
+                value={code}
+                onChange={setCode}
+                fontSize={14}
+                width="100%"
+                height="100%"
+                setOptions={{
+                  enableBasicAutocompletion: true,
+                  enableLiveAutocompletion: true,
+                  enableSnippets: true,
+                  showLineNumbers: true,
+                  tabSize: 4,
+                }}
+              />
+            </div>
+
+            <div className="flex justify-between mb-4">
+              <div className="w-1/2 pr-2">
+                <h2 className="text-lg font-semibold mb-2">Input</h2>
+                <textarea
+                  rows="5"
+                  value={input}
+                  placeholder="Input"
+                  onChange={(e) => setInput(e.target.value)}
+                  className="border border-gray-300 rounded-sm py-1.5 px-4 mb-1 focus:outline-none focus:border-indigo-500 resize-none w-full"
+                ></textarea>
+              </div>
+              <div className="w-1/2 pl-2">
+                <h2 className="text-lg font-semibold mb-2">Output</h2>
+                <div
+                  className="bg-white shadow-md rounded-lg p-4"
+                  style={{ minHeight: "140px" }}
+                >
+                  <pre
+                    className="whitespace-pre-wrap"
+                    style={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                  >
+                    {output}
+                  </pre>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-4 space-x-4">
+              <button
+                onClick={handleRun}
+                className="bg-gradient-to-br from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 focus:outline-none text-white font-medium rounded-lg text-sm px-5 py-2.5"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="w-5 h-5 inline-block align-middle me-2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z"
+                  />
+                </svg>
+                Run
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="bg-green-500 text-white px-4 py-3 rounded"
+              >
+                Submit
+              </button>
+            </div>
+          
+            </div>
+      </Split>
     </div>
-  </div>
-</div>
-);
+  );
+};
+
+const renderDescription = (description) => {
+  // Regular expression to find **text** or __text__ and replace with <span class="font-bold">text</span>
+  const boldPattern = /(\*\*|__)(.*?)\1/g;
+
+  // Replace the pattern with the span tag for bold styling
+  const processedDescription = description.replace(
+    boldPattern,
+    (match, p1, p2) => {
+      return `<span class="font-bold">${p2}</span>`;
+    }
+  );
+
+  // Use dangerouslySetInnerHTML to render HTML content
+  return <span dangerouslySetInnerHTML={{ __html: processedDescription }} />;
 };
 
 export default ProblemDetailsPage;
-
-
-
-
-{/* { 
-          <AceEditor
-            mode="cpp" // Change this to the mode you need
-            theme="monokai"
-            name="codeEditor"
-            value={code}
-            onValueChange={code => setCode(code)}
-            fontSize={14}
-            showPrintMargin={true}
-            showGutter={true}
-            highlightActiveLine={true}
-            setOptions={{
-              enableBasicAutocompletion: true,
-              enableLiveAutocompletion: true,
-              enableSnippets: true,
-              showLineNumbers: true,
-              tabSize: 2,
-            }}
-
-            className="flex-grow border rounded"
-            style={{ width: '100%', height: 'calc(100% - 50px)' }} // Adjusting height for buttons
-          />  
-          }  */}
-
-
-
-          
-        {/* <div className="bg-gray-100 shadow-md w-full max-w-lg mb-4" style={{ height: '300px', overflowY: 'auto' }}>
-        <Editor
-            value={code}
-            onValueChange={code => setCode(code)}
-            highlight={code => highlight(code, languages.js)}
-            padding={5}
-            style={{
-              fontFamily: '"Fira code", "Fira Mono", monospace',
-              fontSize: 15,
-              outline: 'none',
-              border: 'none',
-              backgroundColor: '#f7fafc',
-              height: '100%',
-              overflowY: 'auto'
-            }}
-          />
-
-        </div> */}

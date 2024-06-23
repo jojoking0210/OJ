@@ -13,7 +13,13 @@ const problemSchema = new mongoose.Schema({
   difficulty: { type: String, required: true },
   submissionPercentage: { type: Number },
   solution: { type: String },
-  testCases: [testCaseSchema] // Reference the testCaseSchema
+  testCases: [testCaseSchema], // Reference the testCaseSchema
+  constraints:{
+
+  },
+  time:{
+    
+  }
 });
 
 module.exports = mongoose.model('Problem', problemSchema);

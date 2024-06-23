@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import NavBar from './NavBar';
-import { Link } from 'react-router-dom';
 
 const ProfilePage = () => {
   const { id } = useParams();
@@ -12,6 +11,7 @@ const ProfilePage = () => {
   const [editedUser, setEditedUser] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -61,12 +61,13 @@ const ProfilePage = () => {
 
   const handleSave = async () => {
     try {
-      // Send updated user data to backend
       const formData = new FormData();
       formData.append('firstname', editedUser.firstname);
       formData.append('lastname', editedUser.lastname);
       formData.append('email', editedUser.email);
-      formData.append('profilePhoto', selectedFile); // Append selected file to form data
+      if (selectedFile) {
+        formData.append('profilePhoto', selectedFile);
+      }
 
       const response = await axios.put(`http://localhost:5050/users/${id}`, formData, {
         headers: {
@@ -104,7 +105,7 @@ const ProfilePage = () => {
       );
       localStorage.removeItem('token');
       setCurrentUser(null);
-      // Redirect to home or login page after logout
+      navigate('/');
     } catch (error) {
       console.error('Failed to logout:', error);
     }
@@ -121,11 +122,11 @@ const ProfilePage = () => {
         {user && (
           <div className="bg-white p-8 rounded shadow-md">
             <div className="flex items-center mb-4">
-              {/* <img
-                src={user.profilePhoto}
+              <img
+                src={user.profilePhoto || 'https://via.placeholder.com/150'}
                 alt="Profile"
                 className="w-20 h-20 rounded-full mr-4"
-              /> */}
+              />
               <h2 className="text-3xl font-bold">{user.username}</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -138,6 +139,9 @@ const ProfilePage = () => {
                     </p>
                     <p className="text-lg">
                       <strong>Last Name:</strong> {user.lastname}
+                    </p>
+                    <p className="text-lg">
+                      <strong>Role :</strong> {user.role}
                     </p>
                     <p className="text-lg">
                       <strong>Email:</strong> {user.email}
@@ -184,12 +188,11 @@ const ProfilePage = () => {
               <div className="col-span-1">
                 <h3 className="text-xl font-semibold mb-2">Badges</h3>
                 <p className="text-lg">
-                  <strong>Badges:</strong>{' '}
-                  {user.badges ? user.badges.join(', ') : 'None'}
+                  <strong>Badges:</strong> {user.badges ? user.badges.join(', ') : 'None'}
                 </p>
               </div>
             </div>
-            <div className="mb-8">
+            {/* <div className="mb-8">
               {!isEditing ? (
                 <button
                   onClick={handleEdit}
@@ -213,7 +216,7 @@ const ProfilePage = () => {
                   </button>
                 </>
               )}
-            </div>
+            </div> */}
           </div>
         )}
         {user && user.solvedProblems.length > 0 && (
@@ -221,13 +224,12 @@ const ProfilePage = () => {
             <h2 className="text-2xl font-bold mb-4">Solved Problems</h2>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {user.solvedProblems.map((problemId) => (
-                
                 <li key={problemId} className="bg-white rounded-lg shadow-md p-4">
                   <Link
                     to={`/problems/${problemId}`}
                     className="text-blue-600 hover:underline"
                   >
-                    {problemId}
+                    Problem ID: {problemId}
                   </Link>
                 </li>
               ))}

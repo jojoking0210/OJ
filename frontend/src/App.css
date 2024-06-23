@@ -40,3 +40,16 @@
     background: #0056b3;
   }
   
+  /* App.css */
+
+/* Style for the split area */
+.split .gutter {
+  background-color: transparent;
+  cursor: col-resize; /* Change cursor to indicate resizing */
+}
+
+.split .gutter:hover {
+  background-color: blue; /* Change background color on hover */
+}
+
+/*  */

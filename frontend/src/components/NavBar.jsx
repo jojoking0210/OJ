@@ -7,7 +7,7 @@ const NavBar = ({ user, onLogout }) => {
     <nav className="bg-blue-600 w-full py-4">
       <div className="container mx-auto flex justify-between items-center px-4">
         {/* Logo */}
-        <h1 className="text-white text-xl font-bold">
+        <h1 className="text-white text-3xl font-bold">
           <Link to="/" className="hover:text-yellow-300 transition duration-300 ease-in-out">
             Online Judge
           </Link>
@@ -37,7 +37,7 @@ const NavBar = ({ user, onLogout }) => {
             <>
               <li>
                 <Link to="/login" className="text-white hover:text-yellow-300 transition duration-300 ease-in-out">
-                  Login
+                 Login
                 </Link>
               </li>
               <li>

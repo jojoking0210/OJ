@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import HomeButton from './HomeButton';
 import NavBar from './NavBar';
+
 const Problems = () => {
   const [problems, setProblems] = useState([]);
   const [filteredProblems, setFilteredProblems] = useState([]);
@@ -230,7 +231,7 @@ const Problems = () => {
                 <li key={problem._id} className="bg-white p-4 mb-2 rounded shadow-md flex justify-between items-center hover:shadow-lg transition duration-300 ease-in-out">
                   <div>
                     <h4 className="text-lg font-bold text-blue-600">{problem.name}</h4>
-                    <p className="text-gray-700">{problem.description}</p>
+                    <p className="text-base text-gray-700 mb-4 whitespace-pre-wrap">{problem.description}</p>
                     <p className={`inline-block px-2 py-1 rounded mt-2 ${
                       problem.difficulty === 'easy' ? 'bg-green-200 text-green-800' : 
                       problem.difficulty === 'medium' ? 'bg-yellow-200 text-yellow-800' : 'bg-red-200 text-red-800'
