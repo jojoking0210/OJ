@@ -28,7 +28,7 @@ const Register = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post('http://localhost:5050/register', formData);
+      const response = await axios.post('http://16.16.201.79:5050/register', formData);
       toast.success(response.data.message); // Show success message
       if (response.data.user) {
         setShowPopup(true);
