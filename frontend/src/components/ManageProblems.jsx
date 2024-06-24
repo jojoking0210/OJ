@@ -27,7 +27,7 @@ const Problems = () => {
 
   const fetchProblems = async () => {
     try {
-      const response = await axios.get('http://localhost:5050/problems');
+      const response = await axios.get('http://16.16.201.79:5050/problems');
       setProblems(response.data);
     } catch (error) {
       console.error(error);
@@ -46,10 +46,10 @@ const Problems = () => {
 
     try {
       if (editingId) {
-        await axios.put(`http://localhost:5050/problems/${editingId}`, formData);
+        await axios.put(`http://16.16.201.79:5050/problems/${editingId}`, formData);
         setMessage('Problem updated successfully!');
       } else {
-        await axios.post('http://localhost:5050/problems', formData);
+        await axios.post('http://16.16.201.79:5050/problems', formData);
         setMessage('Problem added successfully!');
       }
       setFormData({ name: '', description: '', tag: '', difficulty: 'easy' }); // Reset 'tag' to empty string after submission
@@ -73,7 +73,7 @@ const Problems = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5050/problems/${id}`);
+      await axios.delete(`http://16.16.201.79:5050/problems/${id}`);
       setMessage('Problem deleted successfully!');
       fetchProblems();
     } catch (error) {
@@ -104,7 +104,7 @@ const Problems = () => {
           throw new Error('No token found');
         }
 
-        const response = await axios.get('http://localhost:5050/api/auth/me', {
+        const response = await axios.get('http://16.16.201.79:5050/api/auth/me', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -120,7 +120,7 @@ const Problems = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:5050/api/auth/logout', {}, {
+      await axios.post('http://16.16.201.79:5050/api/auth/logout', {}, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
