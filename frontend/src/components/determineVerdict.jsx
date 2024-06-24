@@ -9,7 +9,7 @@ const handleRun = async () => {
     };
 
     try {
-      const { data } = await axios.post('http://localhost:5050/run', payload);
+      const { data } = await axios.post('http://16.16.201.79:5050/run', payload);
       console.log(data);
       setOutput(data.output); 
     } catch (error) {
