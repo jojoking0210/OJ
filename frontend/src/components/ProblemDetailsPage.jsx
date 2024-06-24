@@ -77,7 +77,7 @@ print('Hello World!')`;
           throw new Error("No token found");
         }
 
-        const response = await axios.get("http://localhost:5050/api/auth/me", {
+        const response = await axios.get("http://16.16.201.79:5050/api/auth/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -99,7 +99,7 @@ print('Hello World!')`;
   const fetchProblemDetails = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:5050/problems/${problemId}`
+        `http://16.16.201.79:5050/problems/${problemId}`
       );
       setProblem(response.data);
       setLoading(false);
@@ -113,7 +113,7 @@ print('Hello World!')`;
   const fetchTestCases = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:5050/problems/${problemId}/testcases`
+        `http://16.16.201.79:5050/problems/${problemId}/testcases`
       );
       setTestCases(response.data);
     } catch (error) {
@@ -130,7 +130,7 @@ print('Hello World!')`;
     };
 
     try {
-      const { data } = await axios.post("http://localhost:5050/run", payload);
+      const { data } = await axios.post("http://16.16.201.79:5050/run", payload);
       setOutput(data.output);
     } catch (error) {
       console.log(error.response);
@@ -153,7 +153,7 @@ print('Hello World!')`;
       }
 
       const { data } = await axios.post(
-        "http://localhost:5050/submit",
+        "http://16.16.201.79:5050/submit",
         payload,
         {
           headers: {
@@ -178,7 +178,7 @@ print('Hello World!')`;
   const handleLogout = async () => {
     try {
       await axios.post(
-        "http://localhost:5050/api/auth/logout",
+        "http://16.16.201.79:5050/api/auth/logout",
         {},
         {
           headers: {
