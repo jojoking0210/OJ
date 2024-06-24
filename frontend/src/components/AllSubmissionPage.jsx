@@ -20,7 +20,7 @@ const SubmissionsPage = () => {
   const fetchSubmissions = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5050/submissions', {
+      const response = await axios.get('http://16.16.201.79:5050/submissions', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -53,7 +53,7 @@ const SubmissionsPage = () => {
           throw new Error('No token found');
         }
 
-        const response = await axios.get('http://localhost:5050/api/auth/me', {
+        const response = await axios.get('http://16.16.201.79:5050/api/auth/me', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -69,7 +69,7 @@ const SubmissionsPage = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:5050/api/auth/logout', {}, {
+      await axios.post('http://16.16.201.79:5050/api/auth/logout', {}, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
