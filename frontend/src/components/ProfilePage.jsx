@@ -16,7 +16,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get(`http://16.16.201.79:5050/users/${id}`);
+        const response = await axios.get(`https://backend.oj-online-judge.site/users/${id}`);
         setUser(response.data);
         setEditedUser(response.data);
       } catch (error) {
@@ -36,7 +36,7 @@ const ProfilePage = () => {
           throw new Error('No token found');
         }
 
-        const response = await axios.get('http://16.16.201.79:5050/api/auth/me', {
+        const response = await axios.get('https://backend.oj-online-judge.site/api/auth/me', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -69,7 +69,7 @@ const ProfilePage = () => {
         formData.append('profilePhoto', selectedFile);
       }
 
-      const response = await axios.put(`http://16.16.201.79:5050/users/${id}`, formData, {
+      const response = await axios.put(`https://backend.oj-online-judge.site/users/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -95,7 +95,7 @@ const ProfilePage = () => {
   const handleLogout = async () => {
     try {
       await axios.post(
-        'http://16.16.201.79:5050/api/auth/logout',
+        'https://backend.oj-online-judge.site/api/auth/logout',
         {},
         {
           headers: {
